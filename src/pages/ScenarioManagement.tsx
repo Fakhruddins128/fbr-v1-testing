@@ -27,7 +27,6 @@ import {
   MenuItem,
   CircularProgress,
   OutlinedInput,
-  Grid,
   Divider,
   Tabs,
   Tab,
@@ -53,7 +52,6 @@ import {
 import {
   BUSINESS_ACTIVITIES,
   SECTORS,
-  getApplicableScenariosForMultiple,
   validateBusinessActivitySectorCombination,
   type BusinessActivity,
   type Sector,
@@ -128,6 +126,7 @@ const ScenarioManagement: React.FC = () => {
 
   useEffect(() => {
     fetchScenarios();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchScenarios = async () => {

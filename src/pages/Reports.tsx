@@ -22,8 +22,6 @@ import {
   Alert,
   Tabs,
   Tab,
-  Chip,
-  LinearProgress,
   Grid
 } from '@mui/material';
 import {
@@ -33,13 +31,12 @@ import {
   Assessment as AssessmentIcon,
   PieChart as PieChartIcon,
   BarChart as BarChartIcon,
-  Description as DescriptionIcon,
-  AccountBalance as AccountBalanceIcon
+  Description as DescriptionIcon
 } from '@mui/icons-material';
 import { CircularProgress } from '@mui/material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart as RechartsBarChart, Bar } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
-import reportsApi, { ReportData, TopProduct, TopCustomer, ReportsData } from '../services/reportsApi';
+import reportsApi, { ReportsData } from '../services/reportsApi';
 
 interface SnackbarState {
   open: boolean;
@@ -114,7 +111,7 @@ const Reports: React.FC = () => {
   const [complianceSummary, setComplianceSummary] = useState<ComplianceSummary | null>(null);
   const [scenarioUsage, setScenarioUsage] = useState<ScenarioUsage | null>(null);
   const [complianceTrends, setComplianceTrends] = useState<ComplianceTrends | null>(null);
-  const [fbrDateRange, setFbrDateRange] = useState({
+  const [fbrDateRange] = useState({
     startDate: format(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
     endDate: format(new Date(), 'yyyy-MM-dd')
   });
@@ -156,6 +153,7 @@ const Reports: React.FC = () => {
 
   useEffect(() => {
     fetchReportsData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleExportReport = (format: string) => {
@@ -255,10 +253,6 @@ const Reports: React.FC = () => {
     } else if (newValue === 3) {
       fetchComplianceTrends();
     }
-  };
-
-  const handleFbrDateRangeChange = (field: 'startDate' | 'endDate', value: string) => {
-    setFbrDateRange(prev => ({ ...prev, [field]: value }));
   };
 
   // FBR Compliance Report Rendering Functions

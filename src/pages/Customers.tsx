@@ -35,7 +35,6 @@ import {
   Delete as DeleteIcon,
   Person as PersonIcon,
   Business as BusinessIcon,
-  TrendingUp as TrendingUpIcon,
   Group as GroupIcon,
   Upload as UploadIcon,
   Download as DownloadIcon,
@@ -45,10 +44,7 @@ import { customerApi, Customer, CreateCustomerRequest, UpdateCustomerRequest } f
 import { 
   BUSINESS_ACTIVITIES, 
   SECTORS, 
-  getApplicableScenariosForMultiple,
-  validateBusinessActivitySectorCombination,
-  areValidBusinessActivities,
-  areValidSectors
+  getApplicableScenariosForMultiple
 } from '../utils/scenarioValidation';
 
 interface CustomerFormData {
@@ -103,6 +99,7 @@ const Customers: React.FC = () => {
   // Fetch customers on component mount
   useEffect(() => {
     fetchCustomers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchCustomers = async () => {
@@ -152,10 +149,6 @@ const Customers: React.FC = () => {
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });
-  };
-
-  const getStatusColor = (isActive: boolean | undefined) => {
-    return isActive ? 'success' : 'default';
   };
 
   const handleAddCustomer = () => {

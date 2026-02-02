@@ -90,9 +90,9 @@ const UserManagement: React.FC = () => {
     }
   }, [dispatch, currentUser]);
 
-  useEffect(() => {
-    calculateUserStats();
-  }, [users]);
+    useEffect(() => {
+      calculateUserStats();
+    }, [users]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchUsers = async () => {
     try {

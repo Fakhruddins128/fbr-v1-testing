@@ -47,9 +47,7 @@ import {
   BUSINESS_ACTIVITIES, 
   SECTORS, 
   getApplicableScenariosForMultiple,
-  validateBusinessActivitySectorCombination,
-  areValidBusinessActivities,
-  areValidSectors 
+  validateBusinessActivitySectorCombination 
 } from '../utils/scenarioValidation';
 
 interface VendorFormData {
@@ -96,6 +94,7 @@ const Vendors: React.FC = () => {
   // Fetch vendors on component mount
   useEffect(() => {
     fetchVendors();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchVendors = async () => {
