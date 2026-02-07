@@ -18,6 +18,7 @@ app.use(
   cors({
     origin: [
       "https://fbr-v1-testing.vercel.app", // your frontend domain
+      "http://localhost:3000", // local frontend
     ],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true, // if using cookies or auth headers
@@ -1042,12 +1043,59 @@ app.get("/api/health", (req, res) => {
 app.post("/api/auth/login", async (req, res) => {
   const { username, password } = req.body;
 
-  console.log("Login attempt:", { username, passwordLength: password?.length });
+  console.log("Login attempt:", { username, passwordLength: password?.length, isDbConnected });
 
   if (!username || !password) {
     return res
       .status(400)
       .json({ message: "Username and password are required" });
+  }
+
+  // Mock login if database is not connected
+  if (!isDbConnected) {
+    console.log("Database not connected. Attempting mock login.");
+    if (username === "admin" && password === "admin123") {
+       const mockUser = {
+         UserID: "mock-admin-id",
+         Username: "admin",
+         Email: "admin@example.com",
+         Role: "SUPER_ADMIN",
+         FirstName: "Mock",
+         LastName: "Admin",
+         CompanyID: "mock-company-id",
+         IsActive: true
+       };
+       
+       const token = jwt.sign(
+        {
+          id: mockUser.UserID,
+          userId: mockUser.UserID,
+          username: mockUser.Username,
+          role: mockUser.Role,
+          companyId: mockUser.CompanyID,
+        },
+        process.env.JWT_SECRET || "your_jwt_secret",
+        { expiresIn: "24h" }
+      );
+
+      return res.status(200).json({
+        user: {
+          id: mockUser.UserID,
+          username: mockUser.Username,
+          email: mockUser.Email,
+          role: mockUser.Role,
+          firstName: mockUser.FirstName,
+          lastName: mockUser.LastName,
+          companyId: mockUser.CompanyID,
+          isActive: mockUser.IsActive,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        token,
+      });
+    } else {
+       return res.status(401).json({ message: "Invalid username or password (mock mode: use admin/admin123)" });
+    }
   }
 
   try {
