@@ -12,7 +12,8 @@ import {
   SaleTypeRateApiResponse
 } from '../types';
 
-import { API_BASE_URL } from '../services/api';
+// Backend API Configuration
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 // FBR API Configuration
 const API_CONFIG = {

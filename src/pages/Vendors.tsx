@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -91,13 +91,11 @@ const Vendors: React.FC = () => {
   const businessActivityOptions = BUSINESS_ACTIVITIES;
   const sectorOptions = SECTORS;
 
-  // Fetch vendors on component mount
-  useEffect(() => {
-    fetchVendors();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const showSnackbar = useCallback((message: string, severity: 'success' | 'error') => {
+    setSnackbar({ open: true, message, severity });
   }, []);
 
-  const fetchVendors = async () => {
+  const fetchVendors = useCallback(async () => {
     try {
       setLoading(true);
       const response = await vendorApi.getAllVendors();
@@ -112,11 +110,12 @@ const Vendors: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showSnackbar]);
 
-  const showSnackbar = (message: string, severity: 'success' | 'error') => {
-    setSnackbar({ open: true, message, severity });
-  };
+  // Fetch vendors on component mount
+  useEffect(() => {
+    fetchVendors();
+  }, [fetchVendors]);
 
   const handleCloseSnackbar = () => {
     setSnackbar({ ...snackbar, open: false });

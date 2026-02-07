@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -118,11 +118,11 @@ const Reports: React.FC = () => {
 
   const { salesData, topProducts, topCustomers } = reportsData;
 
-  const showSnackbar = (message: string, severity: 'success' | 'error' | 'warning' | 'info' = 'success') => {
+  const showSnackbar = useCallback((message: string, severity: 'success' | 'error' | 'warning' | 'info' = 'success') => {
     setSnackbar({ open: true, message, severity });
-  };
+  }, []);
 
-  const fetchReportsData = async () => {
+  const fetchReportsData = useCallback(async () => {
     setLoading(true);
     try {
       const params = {
@@ -145,7 +145,7 @@ const Reports: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [reportType, dateRange, startDate, endDate, showSnackbar]);
 
   const handleGenerateReport = () => {
     fetchReportsData();
@@ -153,8 +153,7 @@ const Reports: React.FC = () => {
 
   useEffect(() => {
     fetchReportsData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchReportsData]);
 
   const handleExportReport = (format: string) => {
     // Export functionality to be implemented

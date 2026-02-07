@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -96,13 +96,11 @@ const Customers: React.FC = () => {
   // State for applicable scenarios
   const [applicableScenarios, setApplicableScenarios] = useState<string[]>([]);
 
-  // Fetch customers on component mount
-  useEffect(() => {
-    fetchCustomers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const showSnackbar = useCallback((message: string, severity: 'success' | 'error') => {
+    setSnackbar({ open: true, message, severity });
   }, []);
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     setLoading(true);
     try {
       const response = await customerApi.getAllCustomers();
@@ -116,11 +114,12 @@ const Customers: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showSnackbar]);
 
-  const showSnackbar = (message: string, severity: 'success' | 'error') => {
-    setSnackbar({ open: true, message, severity });
-  };
+  // Fetch customers on component mount
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
   
   const handleMultiSelectChange = (fieldName: 'businessActivity' | 'sector') => async (event: any) => {
     const value = event.target.value;
