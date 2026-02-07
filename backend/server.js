@@ -2064,6 +2064,45 @@ app.put("/api/companies/:id", authenticateToken, async (req, res) => {
   }
 });
 
+// Delete company (Soft delete)
+app.delete("/api/companies/:id", authenticateToken, async (req, res) => {
+  // Check if user is super admin
+  if (req.user.role !== "SUPER_ADMIN") {
+    return res
+      .status(403)
+      .json({ message: "Access denied. Super Admin role required." });
+  }
+
+  const { id } = req.params;
+
+  try {
+    if (isDbConnected) {
+      const request = new sql.Request();
+      // Soft delete: set IsActive to 0
+      const result = await request
+        .input("id", sql.UniqueIdentifier, id)
+        .input("updatedAt", sql.DateTime, new Date())
+        .query(`
+          UPDATE Companies 
+          SET IsActive = 0, UpdatedAt = @updatedAt
+          WHERE CompanyID = @id
+        `);
+
+      if (result.rowsAffected[0] === 0) {
+        return res.status(404).json({ message: "Company not found" });
+      }
+
+      res.status(200).json({ message: "Company deleted successfully", id });
+    } else {
+       // Mock mode
+       res.status(200).json({ message: "Company deleted successfully (mock)", id });
+    }
+  } catch (error) {
+    console.error("Error deleting company:", error);
+    res.status(500).json({ message: "Server error while deleting company" });
+  }
+});
+
 // FBR Token Management Endpoints
 
 // Get FBR token for a company
