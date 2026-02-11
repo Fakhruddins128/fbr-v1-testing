@@ -113,6 +113,7 @@ export interface Invoice {
   buyerAddress: string;
   buyerRegistrationType: string;
   invoiceRefNo: string;
+  fbrInvoiceNumber?: string;
   items: InvoiceItem[];
   totalAmount: number;
   totalSalesTax: number;
