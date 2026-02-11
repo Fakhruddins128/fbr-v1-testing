@@ -61,6 +61,7 @@ const CompanyManagement: React.FC = () => {
   // Form state
   const [formData, setFormData] = useState({
     name: '',
+    businessNameForSalesInvoice: '',
     ntnNumber: '',
     cnic: '',
     address: '',
@@ -87,6 +88,7 @@ const CompanyManagement: React.FC = () => {
       
       setFormData({
         name: company.name,
+        businessNameForSalesInvoice: company.businessNameForSalesInvoice || '',
         ntnNumber: company.ntnNumber,
         cnic: company.cnic,
         address: company.address,
@@ -116,6 +118,7 @@ const CompanyManagement: React.FC = () => {
       setCurrentCompany(null);
       setFormData({
         name: '',
+        businessNameForSalesInvoice: '',
         ntnNumber: '',
         cnic: '',
         address: '',
@@ -391,12 +394,23 @@ const CompanyManagement: React.FC = () => {
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
               <TextField
                 fullWidth
+                label="Business Name for Sales Invoice"
+                name="businessNameForSalesInvoice"
+                value={formData.businessNameForSalesInvoice}
+                onChange={handleInputChange}
+                placeholder="Name to appear on invoices"
+              />
+            </Box>
+            <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
+              <TextField
+                fullWidth
                 label="NTN Number"
                 name="ntnNumber"
                 value={formData.ntnNumber}
                 onChange={handleInputChange}
                 error={!!formErrors.ntnNumber}
                 helperText={formErrors.ntnNumber}
+                placeholder="7 or 13 digits"
               />
             </Box>
             <Box sx={{ width: { xs: '100%', sm: 'calc(50% - 8px)' } }}>

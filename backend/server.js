@@ -1727,7 +1727,7 @@ app.get("/api/companies", authenticateToken, async (req, res) => {
     const request = new sql.Request();
 
     const result = await request.query(`
-      SELECT CompanyID, Name, NTNNumber, CNIC, Address, City, Province, 
+      SELECT CompanyID, Name, NTNNumber, CNIC, BusinessNameForSalesInvoice, Address, City, Province, 
              ContactPerson, ContactEmail, ContactPhone, BusinessActivity, Sector, IsActive, CreatedAt, UpdatedAt
       FROM Companies 
       WHERE IsActive = 1
@@ -1740,6 +1740,7 @@ app.get("/api/companies", authenticateToken, async (req, res) => {
       name: company.Name,
       ntnNumber: company.NTNNumber,
       cnic: company.CNIC,
+      businessNameForSalesInvoice: company.BusinessNameForSalesInvoice,
       address: company.Address,
       city: company.City,
       province: company.Province,
@@ -1826,7 +1827,7 @@ app.get("/api/companies/:id", authenticateToken, async (req, res) => {
     const request = new sql.Request();
 
     const result = await request.input("id", sql.UniqueIdentifier, id).query(`
-        SELECT CompanyID, Name, NTNNumber, Address, City, Province, 
+        SELECT CompanyID, Name, NTNNumber, CNIC, BusinessNameForSalesInvoice, Address, City, Province, 
                ContactPerson, ContactEmail, ContactPhone, BusinessActivity, Sector, IsActive, CreatedAt, UpdatedAt
         FROM Companies 
         WHERE CompanyID = @id AND IsActive = 1
@@ -1841,6 +1842,8 @@ app.get("/api/companies/:id", authenticateToken, async (req, res) => {
       id: company.CompanyID.toString(),
       name: company.Name,
       ntnNumber: company.NTNNumber,
+      cnic: company.CNIC,
+      businessNameForSalesInvoice: company.BusinessNameForSalesInvoice,
       address: company.Address,
       city: company.City,
       province: company.Province,
@@ -1876,6 +1879,7 @@ app.post("/api/companies", authenticateToken, async (req, res) => {
     name,
     ntnNumber,
     cnic,
+    businessNameForSalesInvoice,
     address,
     city,
     province,
@@ -1908,6 +1912,7 @@ app.post("/api/companies", authenticateToken, async (req, res) => {
       .input("name", sql.NVarChar(255), name)
       .input("ntnNumber", sql.NVarChar(50), ntnNumber)
       .input("cnic", sql.NVarChar(20), cnic)
+      .input("businessNameForSalesInvoice", sql.NVarChar(255), businessNameForSalesInvoice)
       .input("address", sql.NVarChar(500), address)
       .input("city", sql.NVarChar(100), city)
       .input("province", sql.NVarChar(100), province)
@@ -1924,10 +1929,10 @@ app.post("/api/companies", authenticateToken, async (req, res) => {
         sql.NVarChar(sql.MAX),
         sector ? JSON.stringify(sector) : null
       ).query(`
-        INSERT INTO Companies (Name, NTNNumber, CNIC, Address, City, Province, ContactPerson, ContactEmail, ContactPhone, BusinessActivity, Sector, IsActive, CreatedAt, UpdatedAt)
-        OUTPUT INSERTED.CompanyID, INSERTED.Name, INSERTED.NTNNumber, INSERTED.CNIC, INSERTED.Address, INSERTED.City, INSERTED.Province, 
+        INSERT INTO Companies (Name, NTNNumber, CNIC, BusinessNameForSalesInvoice, Address, City, Province, ContactPerson, ContactEmail, ContactPhone, BusinessActivity, Sector, IsActive, CreatedAt, UpdatedAt)
+        OUTPUT INSERTED.CompanyID, INSERTED.Name, INSERTED.NTNNumber, INSERTED.CNIC, INSERTED.BusinessNameForSalesInvoice, INSERTED.Address, INSERTED.City, INSERTED.Province, 
                INSERTED.ContactPerson, INSERTED.ContactEmail, INSERTED.ContactPhone, INSERTED.BusinessActivity, INSERTED.Sector, INSERTED.IsActive, INSERTED.CreatedAt, INSERTED.UpdatedAt
-        VALUES (@name, @ntnNumber, @cnic, @address, @city, @province, @contactPerson, @contactEmail, @contactPhone, @businessActivity, @sector, 1, GETDATE(), GETDATE())
+        VALUES (@name, @ntnNumber, @cnic, @businessNameForSalesInvoice, @address, @city, @province, @contactPerson, @contactEmail, @contactPhone, @businessActivity, @sector, 1, GETDATE(), GETDATE())
       `);
 
     const newCompany = result.recordset[0];
@@ -1936,6 +1941,7 @@ app.post("/api/companies", authenticateToken, async (req, res) => {
       name: newCompany.Name,
       ntnNumber: newCompany.NTNNumber,
       cnic: newCompany.CNIC,
+      businessNameForSalesInvoice: newCompany.BusinessNameForSalesInvoice,
       address: newCompany.Address,
       city: newCompany.City,
       province: newCompany.Province,
@@ -1972,6 +1978,7 @@ app.put("/api/companies/:id", authenticateToken, async (req, res) => {
     name,
     ntnNumber,
     cnic,
+    businessNameForSalesInvoice,
     address,
     city,
     province,
@@ -2006,6 +2013,7 @@ app.put("/api/companies/:id", authenticateToken, async (req, res) => {
       .input("name", sql.NVarChar(255), name)
       .input("ntnNumber", sql.NVarChar(50), ntnNumber)
       .input("cnic", sql.NVarChar(20), cnic)
+      .input("businessNameForSalesInvoice", sql.NVarChar(255), businessNameForSalesInvoice)
       .input("address", sql.NVarChar(500), address)
       .input("city", sql.NVarChar(100), city)
       .input("province", sql.NVarChar(100), province)
@@ -2024,10 +2032,10 @@ app.put("/api/companies/:id", authenticateToken, async (req, res) => {
       )
       .input("isActive", sql.Bit, isActive).query(`
         UPDATE Companies 
-        SET Name = @name, NTNNumber = @ntnNumber, CNIC = @cnic, Address = @address, City = @city, Province = @province,
+        SET Name = @name, NTNNumber = @ntnNumber, CNIC = @cnic, BusinessNameForSalesInvoice = @businessNameForSalesInvoice, Address = @address, City = @city, Province = @province,
             ContactPerson = @contactPerson, ContactEmail = @contactEmail, ContactPhone = @contactPhone,
             BusinessActivity = @businessActivity, Sector = @sector, IsActive = @isActive, UpdatedAt = GETDATE()
-        OUTPUT INSERTED.CompanyID, INSERTED.Name, INSERTED.NTNNumber, INSERTED.CNIC, INSERTED.Address, INSERTED.City, INSERTED.Province,
+        OUTPUT INSERTED.CompanyID, INSERTED.Name, INSERTED.NTNNumber, INSERTED.CNIC, INSERTED.BusinessNameForSalesInvoice, INSERTED.Address, INSERTED.City, INSERTED.Province,
                INSERTED.ContactPerson, INSERTED.ContactEmail, INSERTED.ContactPhone, INSERTED.BusinessActivity, INSERTED.Sector, INSERTED.IsActive, INSERTED.CreatedAt, INSERTED.UpdatedAt
         WHERE CompanyID = @id
       `);
@@ -2042,6 +2050,7 @@ app.put("/api/companies/:id", authenticateToken, async (req, res) => {
       name: updatedCompany.Name,
       ntnNumber: updatedCompany.NTNNumber,
       cnic: updatedCompany.CNIC,
+      businessNameForSalesInvoice: updatedCompany.BusinessNameForSalesInvoice,
       address: updatedCompany.Address,
       city: updatedCompany.City,
       province: updatedCompany.Province,
