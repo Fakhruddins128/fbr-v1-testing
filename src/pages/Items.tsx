@@ -37,6 +37,7 @@ import {
   Upload as UploadIcon,
   Download as DownloadIcon,
 } from '@mui/icons-material';
+import { formatCurrency } from '../utils/formatUtils';
 import { itemsApi, Item, CreateItemRequest } from '../api/itemsApi';
 
 interface ItemFormData {

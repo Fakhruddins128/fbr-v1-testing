@@ -42,6 +42,7 @@ import {
   Print as PrintIcon,
   Close as CloseIcon
 } from '@mui/icons-material';
+import { formatCurrency } from '../utils/formatUtils';
 import SalesInvoiceReport from '../components/SalesInvoiceReport';
 import { Invoice, InvoiceItem, Company } from '../types';
 import { invoiceAPI } from '../services/invoiceApi';
@@ -79,7 +80,7 @@ const Invoices: React.FC = () => {
   };
 
   // Form state
-  const [formData, setFormData] = useState<Omit<Invoice, 'invoiceID' | 'companyID' | 'createdAt' | 'updatedAt' | 'createdBy' | 'scenarioID' | 'totalAmount' | 'totalSalesTax' | 'totalFurtherTax' | 'totalDiscount'>>({
+  const [invoiceForm, setInvoiceForm] = useState<Omit<Invoice, 'invoiceID' | 'companyID' | 'createdAt' | 'updatedAt' | 'createdBy' | 'scenarioID' | 'totalAmount' | 'totalSalesTax' | 'totalFurtherTax' | 'totalDiscount'>>({
     invoiceType: 'Sale Invoice',
     invoiceDate: new Date().toISOString().split('T')[0],
     sellerNTNCNIC: '',
@@ -132,7 +133,7 @@ const Invoices: React.FC = () => {
   // Set seller information when currentCompany changes (for all non-super admin users)
   useEffect(() => {
     if (currentCompany && currentUser?.role !== 'SUPER_ADMIN') {
-      setFormData(prev => ({
+      setInvoiceForm(prev => ({
         ...prev,
         sellerNTNCNIC: currentCompany.ntnNumber || '',
         sellerBusinessName: currentCompany.name || '',
@@ -247,7 +248,7 @@ const Invoices: React.FC = () => {
   const handleOpenDialog = (invoice?: Invoice) => {
     if (invoice) {
       setEditingInvoice(invoice);
-      setFormData({
+      setInvoiceForm({
         invoiceType: invoice.invoiceType,
         invoiceDate: invoice.invoiceDate ? invoice.invoiceDate.split('T')[0] : new Date().toISOString().split('T')[0],
         sellerNTNCNIC: invoice.sellerNTNCNIC,
@@ -278,7 +279,7 @@ const Invoices: React.FC = () => {
         sellerAddress: ''
       };
       
-      setFormData({
+      setInvoiceForm({
         invoiceType: 'Sale Invoice',
         invoiceDate: new Date().toISOString().split('T')[0],
         ...defaultSellerInfo,
@@ -337,7 +338,7 @@ const Invoices: React.FC = () => {
       setSelectedCustomer(null);
       // Remove from localStorage when no company is selected
       localStorage.removeItem('selectedCompanyId');
-      setFormData(prev => ({
+      setInvoiceForm(prev => ({
         ...prev,
         sellerNTNCNIC: '',
         sellerBusinessName: '',
@@ -358,7 +359,7 @@ const Invoices: React.FC = () => {
       setSelectedCompany(company);
       // Save to localStorage for API calls
       localStorage.setItem('selectedCompanyId', companyId);
-      setFormData(prev => ({
+      setInvoiceForm(prev => ({
         ...prev,
         sellerNTNCNIC: company.ntnNumber || '',
         sellerBusinessName: company.name || '',
@@ -381,7 +382,7 @@ const Invoices: React.FC = () => {
       if (editingInvoice) {
         // Update existing invoice
         const invoiceData: Invoice = {
-          ...formData,
+          ...invoiceForm,
           invoiceID: editingInvoice.invoiceID,
           companyID: editingInvoice.companyID,
           totalAmount: editingInvoice.totalAmount,
@@ -409,7 +410,7 @@ const Invoices: React.FC = () => {
         const companyID = user?.companyId || user?.id || '1';
         
         const invoiceData: Invoice = {
-          ...formData,
+          ...invoiceForm,
           invoiceID: '',
           companyID: companyID,
           totalAmount: 0,
@@ -476,15 +477,15 @@ const Invoices: React.FC = () => {
     }
   };
 
-  const handleInputChange = (field: keyof typeof formData, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field: keyof typeof invoiceForm, value: any) => {
+    setInvoiceForm(prev => ({ ...prev, [field]: value }));
   };
 
   const handleCustomerSelect = (customerId: string) => {
     const customer = customers.find(c => c.id === customerId);
     if (customer) {
       setSelectedCustomer(customer);
-      setFormData(prev => ({
+      setInvoiceForm(prev => ({
         ...prev,
         buyerNTNCNIC: customer.buyerNTNCNIC,
         buyerBusinessName: customer.buyerBusinessName,
@@ -494,7 +495,7 @@ const Invoices: React.FC = () => {
       }));
     } else {
       setSelectedCustomer(null);
-      setFormData(prev => ({
+      setInvoiceForm(prev => ({
         ...prev,
         buyerNTNCNIC: '',
         buyerBusinessName: '',
@@ -506,7 +507,7 @@ const Invoices: React.FC = () => {
   };
 
   const handleItemChange = (index: number, field: keyof InvoiceItem, value: any) => {
-    const updatedItems = [...formData.items];
+    const updatedItems = [...invoiceForm.items];
     updatedItems[index] = { ...updatedItems[index], [field]: value };
     
     // Auto-fill unit price when product is selected
@@ -533,11 +534,11 @@ const Invoices: React.FC = () => {
       item.salesTaxApplicable = item.valueSalesExcludingST * taxRate;
     }
     
-    setFormData(prev => ({ ...prev, items: updatedItems }));
+    setInvoiceForm(prev => ({ ...prev, items: updatedItems }));
   };
 
   const addItem = () => {
-    setFormData(prev => ({
+    setInvoiceForm(prev => ({
       ...prev,
       items: [...prev.items, {
         hsCode: '',
@@ -562,8 +563,8 @@ const Invoices: React.FC = () => {
   };
 
   const removeItem = (index: number) => {
-    if (formData.items.length > 1) {
-      setFormData(prev => ({
+    if (invoiceForm.items.length > 1) {
+      setInvoiceForm(prev => ({
         ...prev,
         items: prev.items.filter((_: InvoiceItem, i: number) => i !== index)
       }));
@@ -816,37 +817,37 @@ const Invoices: React.FC = () => {
               <FormControl fullWidth size="small">
                 <InputLabel>Invoice Type</InputLabel>
                 <Select
-                  value={formData.invoiceType}
-                  label="Invoice Type"
-                  onChange={(e) => handleInputChange('invoiceType', e.target.value)}
-                >
-                  <MenuItem value="Sale Invoice">Sale Invoice</MenuItem>
-                  <MenuItem value="Purchase Invoice">Purchase Invoice</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <TextField
-                fullWidth
-                size="small"
-                label="Invoice Date"
-                type="date"
-                value={formData.invoiceDate}
-                onChange={(e) => handleInputChange('invoiceDate', e.target.value)}
-                InputLabelProps={{ shrink: true }}
-              />
-            </Grid>
-            
-            <Grid size={{ xs: 12, sm: 4 }}>
-              <TextField
-                fullWidth
-                size="small"
-                label="Invoice Reference No"
-                value={formData.invoiceRefNo}
-                onChange={(e) => handleInputChange('invoiceRefNo', e.target.value)}
-              />
-            </Grid>
+                  value={invoiceForm.invoiceType}
+                label="Invoice Type"
+                onChange={(e) => handleInputChange('invoiceType', e.target.value)}
+              >
+                <MenuItem value="Sale Invoice">Sale Invoice</MenuItem>
+                <MenuItem value="Purchase Invoice">Purchase Invoice</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Invoice Date"
+              type="date"
+              value={invoiceForm.invoiceDate}
+              onChange={(e) => handleInputChange('invoiceDate', e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Grid>
+          
+          <Grid size={{ xs: 12, sm: 4 }}>
+            <TextField
+              fullWidth
+              size="small"
+              label="Invoice Reference No"
+              value={invoiceForm.invoiceRefNo}
+              onChange={(e) => handleInputChange('invoiceRefNo', e.target.value)}
+            />
+          </Grid>
 
             {/* Seller Information */}
             <Grid size={{ xs: 12 }}>
@@ -884,7 +885,7 @@ const Invoices: React.FC = () => {
                 fullWidth
                 size="small"
                 label="Seller NTN/CNIC"
-                value={formData.sellerNTNCNIC}
+                value={invoiceForm.sellerNTNCNIC}
                 onChange={(e) => handleInputChange('sellerNTNCNIC', e.target.value)}
                 disabled={currentUser?.role !== 'SUPER_ADMIN'}
                 required
@@ -896,7 +897,7 @@ const Invoices: React.FC = () => {
                 fullWidth
                 size="small"
                 label="Seller Business Name"
-                value={formData.sellerBusinessName}
+                value={invoiceForm.sellerBusinessName}
                 onChange={(e) => handleInputChange('sellerBusinessName', e.target.value)}
                 disabled={currentUser?.role !== 'SUPER_ADMIN'}
                 required
@@ -908,7 +909,7 @@ const Invoices: React.FC = () => {
                 fullWidth
                 size="small"
                 label="Seller Province"
-                value={formData.sellerProvince}
+                value={invoiceForm.sellerProvince}
                 onChange={(e) => handleInputChange('sellerProvince', e.target.value)}
                 disabled={currentUser?.role !== 'SUPER_ADMIN'}
                 required
@@ -920,7 +921,7 @@ const Invoices: React.FC = () => {
                 fullWidth
                 size="small"
                 label="Seller Address"
-                value={formData.sellerAddress}
+                value={invoiceForm.sellerAddress}
                 onChange={(e) => handleInputChange('sellerAddress', e.target.value)}
                 disabled={currentUser?.role !== 'SUPER_ADMIN'}
                 required
@@ -959,7 +960,7 @@ const Invoices: React.FC = () => {
                 fullWidth
                 size="small"
                 label="Buyer NTN/CNIC"
-                value={formData.buyerNTNCNIC}
+                value={invoiceForm.buyerNTNCNIC}
                 onChange={(e) => handleInputChange('buyerNTNCNIC', e.target.value)}
                 required
               />
@@ -970,7 +971,7 @@ const Invoices: React.FC = () => {
                 fullWidth
                 size="small"
                 label="Buyer Business Name"
-                value={formData.buyerBusinessName}
+                value={invoiceForm.buyerBusinessName}
                 onChange={(e) => handleInputChange('buyerBusinessName', e.target.value)}
                 required
               />
@@ -981,7 +982,7 @@ const Invoices: React.FC = () => {
                 fullWidth
                 size="small"
                 label="Buyer Province"
-                value={formData.buyerProvince}
+                value={invoiceForm.buyerProvince}
                 onChange={(e) => handleInputChange('buyerProvince', e.target.value)}
                 required
               />
@@ -992,7 +993,7 @@ const Invoices: React.FC = () => {
                 fullWidth
                 size="small"
                 label="Buyer Address"
-                value={formData.buyerAddress}
+                value={invoiceForm.buyerAddress}
                 onChange={(e) => handleInputChange('buyerAddress', e.target.value)}
                 required
               />
@@ -1002,7 +1003,7 @@ const Invoices: React.FC = () => {
               <FormControl fullWidth size="small">
                 <InputLabel>Buyer Registration Type</InputLabel>
                 <Select
-                  value={formData.buyerRegistrationType}
+                  value={invoiceForm.buyerRegistrationType}
                   label="Buyer Registration Type"
                   onChange={(e) => handleInputChange('buyerRegistrationType', e.target.value)}
                 >
@@ -1191,7 +1192,7 @@ const Invoices: React.FC = () => {
                           />
                         </TableCell>
                         <TableCell>
-                          {formData.items.length > 1 && (
+                          {invoiceForm.items.length > 1 && (
                             <IconButton
                               size="small"
                               color="error"
