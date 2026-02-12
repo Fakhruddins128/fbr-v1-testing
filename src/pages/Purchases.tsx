@@ -34,6 +34,7 @@ import {
   Visibility as ViewIcon,
 } from '@mui/icons-material';
 import { itemsApi, Item } from '../api/itemsApi';
+import { formatCurrency } from '../utils/formatUtils';
 import { purchasesApi, Purchase, PurchaseItem } from '../services/purchasesApi';
 import { vendorApi, Vendor } from '../api/vendorApi';
 import { useAppDispatch, useAppSelector } from '../hooks/useAppDispatch';
@@ -434,7 +435,7 @@ const Purchases: React.FC = () => {
                 Total Purchases
               </Typography>
               <Typography variant="h5">
-                Rs. {totalPurchases.toLocaleString()}
+                {formatCurrency(totalPurchases)}
               </Typography>
             </CardContent>
           </Card>
@@ -510,7 +511,7 @@ const Purchases: React.FC = () => {
                   <TableCell>{new Date(purchase.date || purchase.poDate || new Date()).toLocaleDateString()}</TableCell>
                   <TableCell>{purchase.vendorName}</TableCell>
                   <TableCell>{purchase.items.length}</TableCell>
-                  <TableCell>Rs. {purchase.totalAmount.toLocaleString()}</TableCell>
+                  <TableCell>{formatCurrency(purchase.totalAmount)}</TableCell>
                   <TableCell>
                     <Chip
                       label={purchase.status.charAt(0).toUpperCase() + purchase.status.slice(1)}
@@ -648,7 +649,7 @@ const Purchases: React.FC = () => {
     </MenuItem>
     {items.map((it) => (
       <MenuItem key={it.itemId} value={it.itemId}>
-        {it.description} - Rs. {it.unitPrice}
+        {it.description} - {formatCurrency(it.unitPrice)}
       </MenuItem>
     ))}
   </Select>
@@ -710,7 +711,7 @@ const Purchases: React.FC = () => {
 
           <Box sx={{ mt: 2, p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
             <Typography variant="h6" color="primary.contrastText">
-              Total Purchase Amount: Rs. {formData.items.reduce((sum, item) => sum + item.totalAmount, 0).toLocaleString()}
+              Total Purchase Amount: {formatCurrency(formData.items.reduce((sum, item) => sum + item.totalAmount, 0))}
             </Typography>
           </Box>
         </DialogContent>

@@ -576,17 +576,6 @@ const Invoices: React.FC = () => {
   const totalSalesTax = invoices.reduce((sum, invoice) => sum + (invoice.totalSalesTax || 0), 0);
   const avgInvoiceValue = totalInvoices > 0 ? totalAmount / totalInvoices : 0;
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-PK', {
-      style: 'currency',
-      currency: 'PKR',
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-PK');
-  };
 
   if (loading) {
     return (
