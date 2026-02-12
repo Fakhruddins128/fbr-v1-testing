@@ -42,7 +42,7 @@ import {
   Print as PrintIcon,
   Close as CloseIcon
 } from '@mui/icons-material';
-import { formatCurrency } from '../utils/formatUtils';
+import { formatCurrency, formatDate } from '../utils/formatUtils';
 import SalesInvoiceReport from '../components/SalesInvoiceReport';
 import { Invoice, InvoiceItem, Company } from '../types';
 import { invoiceAPI } from '../services/invoiceApi';
@@ -1049,7 +1049,7 @@ const Invoices: React.FC = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {formData.items.map((item: InvoiceItem, index: number) => (
+                    {invoiceForm.items.map((item: InvoiceItem, index: number) => (
                       <TableRow key={index}>
                         <TableCell>
                           <TextField
