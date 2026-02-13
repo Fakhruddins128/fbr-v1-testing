@@ -96,11 +96,11 @@ class InvoiceApi {
     }
   }
 
-  async updateInvoice(invoiceData: Invoice): Promise<InvoiceResponse> {
+  async updateInvoice(invoiceData: Invoice, companyId?: string): Promise<InvoiceResponse> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceData.invoiceID}`, {
         method: 'PUT',
-        headers: this.getAuthHeaders(),
+        headers: this.getAuthHeaders(companyId),
         body: JSON.stringify(invoiceData),
       });
 

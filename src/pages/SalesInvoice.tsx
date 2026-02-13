@@ -1623,8 +1623,12 @@ const SalesInvoice: React.FC = () => {
       // Note: FBR token is now stored in database and retrieved automatically
       
       // Get current company ID and verify token exists
-      // First try to get from super admin selection, then fall back to current user's company
-      const selectedCompanyId = localStorage.getItem('selectedCompanyId') || user?.companyId || currentCompany?.id;
+      // Prioritize the company ID from the invoice itself if we are editing/have saved
+      const invoiceCompanyId = editingInvoice?.companyID || editingInvoice?.CompanyID;
+      const selectedCompanyId = invoiceCompanyId || localStorage.getItem('selectedCompanyId') || user?.companyId || currentCompany?.id;
+      
+      console.log('[confirmSendToFBR] Using CompanyID:', selectedCompanyId);
+
       let storedToken;
       if (selectedCompanyId) {
         storedToken = await fbrApiService.getApiToken(selectedCompanyId);
@@ -1658,6 +1662,7 @@ const SalesInvoice: React.FC = () => {
             fbrResponseMessage: response.validationResponse?.invoiceStatuses?.[0]?.invoiceNo || ''
         });
 
+        let dbUpdateSuccess = false;
         if (targetInvoiceId) {
             try {
               const internalInvoiceNo = response.validationResponse?.invoiceStatuses?.[0]?.invoiceNo || '';
@@ -1673,27 +1678,43 @@ const SalesInvoice: React.FC = () => {
               
               console.log('[confirmSendToFBR] Update Result:', updateResult);
               
-              // Update local editingInvoice state to reflect FBR submission
-              if (updateResult.success && editingInvoice) {
-                setEditingInvoice({
-                  ...editingInvoice,
-                  fbrInvoiceNumber: fbrInvNo,
-                  fbrResponseStatus: 'Valid',
-                  fbrResponseMessage: internalInvoiceNo
-                });
+              if (updateResult.success) {
+                dbUpdateSuccess = true;
+                if (editingInvoice) {
+                  setEditingInvoice({
+                    ...editingInvoice,
+                    fbrInvoiceNumber: fbrInvNo,
+                    fbrResponseStatus: 'Valid',
+                    fbrResponseMessage: internalInvoiceNo
+                  });
+                }
+              } else {
+                 console.error('Database update failed:', updateResult.error);
+                 alert(`CRITICAL WARNING: FBR submission was successful, but the local database could not be updated.\n\nReason: ${updateResult.error || 'Unknown error'}\n\nPlease contact support with this message.`);
               }
             } catch (err) {
             console.error('Failed to update FBR status in database:', err);
+            alert(`CRITICAL WARNING: FBR submission was successful, but the local database update crashed.\n\nError: ${err instanceof Error ? err.message : String(err)}`);
           }
         } else {
             console.error('Target Invoice ID not found. invoiceId:', invoiceId, 'editingInvoice:', editingInvoice);
+            alert('CRITICAL WARNING: FBR submitted, but Invoice ID is missing. Cannot update database.');
         }
 
-        setNotification({
-          open: true,
-          message: 'Invoice successfully submitted to FBR!',
-          severity: 'success'
-        });
+        if (dbUpdateSuccess) {
+            setNotification({
+              open: true,
+              message: 'Invoice successfully submitted to FBR!',
+              severity: 'success'
+            });
+        } else {
+             // Notification already handled by alert, but keep a persistent warning
+             setNotification({
+              open: true,
+              message: 'FBR submitted successfully, but failed to update local database. See alert.',
+              severity: 'warning'
+            });
+        }
       } else {
         const errorMessage = response.validationResponse?.error || response.message || 'Unknown error';
         setNotification({
@@ -1865,9 +1886,11 @@ const SalesInvoice: React.FC = () => {
         }))
       };
 
+      const selectedCompanyId = localStorage.getItem('selectedCompanyId') || user?.companyId || currentCompany?.id;
+
       const response = isEditMode && editingInvoice 
-        ? await invoiceAPI.updateInvoice({ ...invoiceData, invoiceID: editingInvoice.invoiceID })
-        : await invoiceAPI.createInvoice(invoiceData);
+        ? await invoiceAPI.updateInvoice({ ...invoiceData, invoiceID: editingInvoice.invoiceID }, selectedCompanyId)
+        : await invoiceAPI.createInvoice(invoiceData, selectedCompanyId);
       
       if (response.success) {
         setInvoiceSaved(true);
@@ -2641,8 +2664,8 @@ const SalesInvoice: React.FC = () => {
 
       {/* FBR Response Display */}
       {fbrResponse && (
-        <Paper sx={{ mt: 3, p: 3, bgcolor: fbrResponse.status === 'success' ? '#e8f5e8' : '#ffebee' }}>
-          <Typography variant="h6" gutterBottom color={fbrResponse.status === 'success' ? 'success.main' : 'error.main'}>
+        <Paper sx={{ mt: 3, p: 3, bgcolor: (fbrResponse.status === 'success' || fbrResponse.validationResponse?.status === 'Valid') ? '#e8f5e8' : '#ffebee' }}>
+          <Typography variant="h6" gutterBottom color={(fbrResponse.status === 'success' || fbrResponse.validationResponse?.status === 'Valid') ? 'success.main' : 'error.main'}>
             FBR Response
           </Typography>
           <Box component="pre" sx={{ 

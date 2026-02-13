@@ -674,6 +674,13 @@ app.put("/api/invoices/:id", authenticateToken, async (req, res) => {
       items,
     } = req.body;
 
+    // For super admin, use company ID from header if provided, otherwise use user's company
+    let companyId = req.user.companyId;
+    if (req.user.role === "SUPER_ADMIN" && req.headers["x-company-id"]) {
+      companyId = req.headers["x-company-id"];
+      console.log(`[Update Invoice] Super Admin using target CompanyID: ${companyId}`);
+    }
+
     const pool = await sql.connect(dbConfig);
     const transaction = new sql.Transaction(pool);
 
@@ -702,7 +709,7 @@ app.put("/api/invoices/:id", authenticateToken, async (req, res) => {
       const invoiceResult = await transaction
         .request()
         .input("invoiceId", sql.UniqueIdentifier, id)
-        .input("companyId", sql.UniqueIdentifier, req.user.companyId)
+        .input("companyId", sql.UniqueIdentifier, companyId)
         .input("invoiceType", sql.NVarChar, invoiceType)
         .input("invoiceDate", sql.DateTime, new Date(invoiceDate))
         .input("sellerNTNCNIC", sql.NVarChar, sellerNTNCNIC)
