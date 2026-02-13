@@ -585,26 +585,32 @@ const Invoices: React.FC = () => {
 
   // Statistics calculations
   const calculateInvoiceTotal = (invoice: Invoice) => {
-    if (invoice.totalAmount && invoice.totalAmount > 0) return invoice.totalAmount;
+    // Check if totalAmount exists and is a valid number
+    const totalAmount = Number(invoice.totalAmount);
+    if (!isNaN(totalAmount) && totalAmount > 0) return totalAmount;
     
-    // Fallback calculation if totalAmount is 0
+    // Fallback calculation if totalAmount is 0 or invalid
     return invoice.items.reduce((sum, item) => {
-      // If totalValues is 0/undefined, try to calculate from quantity * rate
-      const itemValue = (item.totalValues && item.totalValues > 0) 
-        ? item.totalValues 
-        : (item.quantity * (item.rate ? Number(item.rate) : 0));
+      // Safely get numeric values
+      const quantity = Number(item.quantity) || 0;
+      const rate = Number(item.rate) || 0;
+      const totalValues = Number(item.totalValues) || 0;
+      const salesTax = Number(item.salesTaxApplicable) || 0;
+      const furtherTax = Number(item.furtherTax) || 0;
+      const extraTax = Number(item.extraTax) || 0;
+      const discount = Number(item.discount) || 0;
 
-      const itemTotal = itemValue + 
-                        (item.salesTaxApplicable || 0) + 
-                        (item.furtherTax || 0) + 
-                        (item.extraTax || 0);
-      return sum + itemTotal - (item.discount || 0);
+      // If totalValues is present, use it; otherwise calculate from quantity * rate
+      const itemValue = (totalValues > 0) ? totalValues : (quantity * rate);
+
+      const itemTotal = itemValue + salesTax + furtherTax + extraTax;
+      return sum + itemTotal - discount;
     }, 0);
   };
 
   const totalInvoices = invoices.length;
-  const totalAmount = invoices.reduce((sum, invoice) => sum + calculateInvoiceTotal(invoice), 0);
-  const totalSalesTax = invoices.reduce((sum, invoice) => sum + (invoice.totalSalesTax || 0), 0);
+  const totalAmount = invoices.reduce((sum, invoice) => sum + (calculateInvoiceTotal(invoice) || 0), 0);
+  const totalSalesTax = invoices.reduce((sum, invoice) => sum + (Number(invoice.totalSalesTax) || 0), 0);
   const avgInvoiceValue = totalInvoices > 0 ? totalAmount / totalInvoices : 0;
 
 
