@@ -1645,11 +1645,12 @@ const SalesInvoice: React.FC = () => {
       
       if (isValid) {
         // Update FBR status in database
-        if (id) {
+        const targetInvoiceId = invoiceId || editingInvoice?.invoiceID;
+        if (targetInvoiceId) {
           try {
             const internalInvoiceNo = response.validationResponse?.invoiceStatuses?.[0]?.invoiceNo || '';
-            await invoiceAPI.updateFbrStatus(id, {
-              fbrInvoiceNumber: response.invoiceNumber,
+            await invoiceAPI.updateFbrStatus(targetInvoiceId, {
+              fbrInvoiceNumber: response.invoiceNumber || '',
               fbrResponseStatus: 'Valid',
               fbrResponseMessage: internalInvoiceNo
             });
