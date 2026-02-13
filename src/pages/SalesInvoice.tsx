@@ -1645,7 +1645,9 @@ const SalesInvoice: React.FC = () => {
       
       if (isValid) {
         // Update FBR status in database
-        const targetInvoiceId = invoiceId || editingInvoice?.invoiceID;
+        // Handle both camelCase (frontend type) and PascalCase (DB response) ID properties
+        const targetInvoiceId = invoiceId || editingInvoice?.invoiceID || editingInvoice?.InvoiceID;
+        
         if (targetInvoiceId) {
           try {
             const internalInvoiceNo = response.validationResponse?.invoiceStatuses?.[0]?.invoiceNo || '';
@@ -1657,6 +1659,8 @@ const SalesInvoice: React.FC = () => {
           } catch (err) {
             console.error('Failed to update FBR status in database:', err);
           }
+        } else {
+            console.error('Target Invoice ID not found. invoiceId:', invoiceId, 'editingInvoice:', editingInvoice);
         }
 
         setNotification({
@@ -1841,6 +1845,17 @@ const SalesInvoice: React.FC = () => {
       
       if (response.success) {
         setInvoiceSaved(true);
+        // Update editingInvoice with the saved invoice data to ensure we have the ID for FBR submission
+        if (response.data) {
+          const savedInvoice = Array.isArray(response.data) ? response.data[0] : response.data;
+          setEditingInvoice(savedInvoice);
+          // If it was a new invoice, we might want to update the URL or set isEditMode
+          // but for now, setting editingInvoice is enough for FBR submission to work
+          if (!isEditMode) {
+             setIsEditMode(true);
+          }
+        }
+        
         setNotification({
           open: true,
           message: isEditMode ? 'Invoice updated successfully!' : 'Invoice saved successfully!',
