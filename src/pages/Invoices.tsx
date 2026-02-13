@@ -37,7 +37,6 @@ import {
   Delete as DeleteIcon,
   Receipt as ReceiptIcon,
   TrendingUp as TrendingUpIcon,
-  AttachMoney as MoneyIcon,
   CurrencyExchange as CurrencyIcon,
   Assessment as AssessmentIcon,
   Print as PrintIcon,
