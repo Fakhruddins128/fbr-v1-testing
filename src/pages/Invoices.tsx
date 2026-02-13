@@ -38,6 +38,7 @@ import {
   Receipt as ReceiptIcon,
   TrendingUp as TrendingUpIcon,
   AttachMoney as MoneyIcon,
+  CurrencyExchange as CurrencyIcon,
   Assessment as AssessmentIcon,
   Print as PrintIcon,
   Close as CloseIcon
@@ -584,8 +585,21 @@ const Invoices: React.FC = () => {
   };
 
   // Statistics calculations
+  const calculateInvoiceTotal = (invoice: Invoice) => {
+    if (invoice.totalAmount && invoice.totalAmount > 0) return invoice.totalAmount;
+    
+    // Fallback calculation if totalAmount is 0
+    return invoice.items.reduce((sum, item) => {
+      const itemTotal = (item.totalValues || 0) + 
+                        (item.salesTaxApplicable || 0) + 
+                        (item.furtherTax || 0) + 
+                        (item.extraTax || 0);
+      return sum + itemTotal - (item.discount || 0);
+    }, 0);
+  };
+
   const totalInvoices = invoices.length;
-  const totalAmount = invoices.reduce((sum, invoice) => sum + (invoice.totalAmount || 0), 0);
+  const totalAmount = invoices.reduce((sum, invoice) => sum + calculateInvoiceTotal(invoice), 0);
   const totalSalesTax = invoices.reduce((sum, invoice) => sum + (invoice.totalSalesTax || 0), 0);
   const avgInvoiceValue = totalInvoices > 0 ? totalAmount / totalInvoices : 0;
 
@@ -644,7 +658,7 @@ const Invoices: React.FC = () => {
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">
-                <MoneyIcon color="success" sx={{ mr: 2 }} />
+                <CurrencyIcon color="success" sx={{ mr: 2 }} />
                 <Box>
                   <Typography color="textSecondary" gutterBottom>
                     Total Amount
@@ -702,7 +716,7 @@ const Invoices: React.FC = () => {
                 <TableCell>Invoice Date</TableCell>
                 <TableCell>Invoice Type</TableCell>
                 <TableCell>FBR Invoice No</TableCell>
-                <TableCell>Seller Business</TableCell>
+                <TableCell>Invoice No</TableCell>
                 <TableCell>Buyer Business</TableCell>
                 <TableCell>Total Amount</TableCell>
                 <TableCell>Sales Tax</TableCell>
@@ -733,9 +747,9 @@ const Invoices: React.FC = () => {
                       />
                     ) : '-'}
                   </TableCell>
-                  <TableCell>{invoice.sellerBusinessName}</TableCell>
+                  <TableCell>{invoice.invoiceRefNo || invoice.invoiceID.substring(0, 8)}</TableCell>
                   <TableCell>{invoice.buyerBusinessName}</TableCell>
-                  <TableCell>{formatCurrency(invoice.totalAmount || 0)}</TableCell>
+                  <TableCell>{formatCurrency(calculateInvoiceTotal(invoice))}</TableCell>
                   <TableCell>{formatCurrency(invoice.totalSalesTax || 0)}</TableCell>
                   <TableCell>
                     <Chip 
