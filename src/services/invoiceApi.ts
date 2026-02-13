@@ -119,6 +119,36 @@ class InvoiceApi {
     }
   }
 
+  async updateFbrStatus(
+    invoiceId: string,
+    fbrData: {
+      fbrInvoiceNumber: string;
+      fbrResponseStatus: string;
+      fbrResponseMessage: string;
+    }
+  ): Promise<InvoiceResponse> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}/fbr-status`, {
+        method: 'POST',
+        headers: this.getAuthHeaders(),
+        body: JSON.stringify(fbrData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error updating FBR status:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+      };
+    }
+  }
+
   async deleteInvoice(invoiceId: string): Promise<InvoiceResponse> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}`, {

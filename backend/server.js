@@ -576,6 +576,52 @@ app.post("/api/invoices", authenticateToken, async (req, res) => {
   }
 });
 
+// Update FBR status for an invoice
+app.post("/api/invoices/:id/fbr-status", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fbrInvoiceNumber, fbrResponseStatus, fbrResponseMessage } = req.body;
+
+    const pool = await sql.connect(dbConfig);
+    
+    // Update the invoice with FBR details
+    const result = await pool
+      .request()
+      .input("invoiceId", sql.UniqueIdentifier, id)
+      .input("companyId", sql.UniqueIdentifier, req.user.companyId)
+      .input("fbrInvoiceNumber", sql.NVarChar, fbrInvoiceNumber)
+      .input("fbrResponseStatus", sql.NVarChar, fbrResponseStatus)
+      .input("fbrResponseMessage", sql.NVarChar, fbrResponseMessage)
+      .query(`
+        UPDATE Invoices SET
+          FBRInvoiceNumber = @fbrInvoiceNumber,
+          FBRResponseStatus = @fbrResponseStatus,
+          FBRResponseMessage = @fbrResponseMessage,
+          UpdatedAt = GETDATE()
+        WHERE InvoiceID = @invoiceId AND CompanyID = @companyId
+      `);
+
+    if (result.rowsAffected[0] === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Invoice not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "FBR status updated successfully",
+    });
+  } catch (error) {
+    console.error("Error updating FBR status:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update FBR status",
+      error: error.message,
+    });
+  }
+});
+
 // Update invoice
 app.put("/api/invoices/:id", authenticateToken, async (req, res) => {
   try {

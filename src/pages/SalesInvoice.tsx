@@ -1644,6 +1644,20 @@ const SalesInvoice: React.FC = () => {
       const isValid = response.validationResponse && response.validationResponse.status === 'Valid';
       
       if (isValid) {
+        // Update FBR status in database
+        if (id) {
+          try {
+            const internalInvoiceNo = response.validationResponse?.invoiceStatuses?.[0]?.invoiceNo || '';
+            await invoiceAPI.updateFbrStatus(id, {
+              fbrInvoiceNumber: response.invoiceNumber,
+              fbrResponseStatus: 'Valid',
+              fbrResponseMessage: internalInvoiceNo
+            });
+          } catch (err) {
+            console.error('Failed to update FBR status in database:', err);
+          }
+        }
+
         setNotification({
           open: true,
           message: 'Invoice successfully submitted to FBR!',
