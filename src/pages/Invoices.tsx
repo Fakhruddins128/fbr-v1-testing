@@ -589,7 +589,12 @@ const Invoices: React.FC = () => {
     
     // Fallback calculation if totalAmount is 0
     return invoice.items.reduce((sum, item) => {
-      const itemTotal = (item.totalValues || 0) + 
+      // If totalValues is 0/undefined, try to calculate from quantity * rate
+      const itemValue = (item.totalValues && item.totalValues > 0) 
+        ? item.totalValues 
+        : (item.quantity * (item.rate || 0));
+
+      const itemTotal = itemValue + 
                         (item.salesTaxApplicable || 0) + 
                         (item.furtherTax || 0) + 
                         (item.extraTax || 0);
