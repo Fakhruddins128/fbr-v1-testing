@@ -79,6 +79,14 @@ const Invoices: React.FC = () => {
     setShowPrintDialog(true);
   };
 
+  const printInvoiceCompany = React.useMemo(() => {
+    if (!printInvoice) return currentCompany;
+    if (currentUser?.role === 'SUPER_ADMIN') {
+      return companies.find(c => c.id === printInvoice.companyID) || currentCompany;
+    }
+    return currentCompany;
+  }, [printInvoice, companies, currentUser, currentCompany]);
+
   // Form state
   const [invoiceForm, setInvoiceForm] = useState<Omit<Invoice, 'invoiceID' | 'companyID' | 'createdAt' | 'updatedAt' | 'createdBy' | 'scenarioID' | 'totalAmount' | 'totalSalesTax' | 'totalFurtherTax' | 'totalDiscount'>>({
     invoiceType: 'Sale Invoice',
@@ -1272,10 +1280,10 @@ const Invoices: React.FC = () => {
               invoiceData={{
                 invoiceType: printInvoice.invoiceType,
                 invoiceDate: printInvoice.invoiceDate,
-                sellerNTNCNIC: printInvoice.sellerNTNCNIC || currentCompany?.ntnNumber || '',
-                 sellerBusinessName: currentCompany?.businessNameForSalesInvoice || printInvoice.sellerBusinessName || currentCompany?.name || '',
-                 sellerProvince: printInvoice.sellerProvince || currentCompany?.province || '',
-                 sellerAddress: printInvoice.sellerAddress || currentCompany?.address || '',
+                sellerNTNCNIC: printInvoice.sellerNTNCNIC || printInvoiceCompany?.ntnNumber || '',
+                sellerBusinessName: printInvoiceCompany?.businessNameForSalesInvoice || printInvoice.sellerBusinessName || printInvoiceCompany?.name || '',
+                sellerProvince: printInvoice.sellerProvince || printInvoiceCompany?.province || '',
+                sellerAddress: printInvoice.sellerAddress || printInvoiceCompany?.address || '',
                 buyerNTNCNIC: printInvoice.buyerNTNCNIC,
                 buyerBusinessName: printInvoice.buyerBusinessName,
                 buyerProvince: printInvoice.buyerProvince,

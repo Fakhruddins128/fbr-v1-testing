@@ -1638,6 +1638,7 @@ const SalesInvoice: React.FC = () => {
       
       // Log company information being submitted
       const response = await fbrApiService.submitInvoice(fbrPayloadPreview);
+      console.log('[confirmSendToFBR] Raw FBR Response:', response);
       setFbrResponse(response);
       
       // Check if the validation response indicates success
@@ -1648,15 +1649,40 @@ const SalesInvoice: React.FC = () => {
         // Handle both camelCase (frontend type) and PascalCase (DB response) ID properties
         const targetInvoiceId = invoiceId || editingInvoice?.invoiceID || editingInvoice?.InvoiceID;
         
+        const fbrInvNo = response.invoiceNumber || response.InvoiceNumber || '';
+
+        console.log('[confirmSendToFBR] Target Invoice ID:', targetInvoiceId);
+        console.log('[confirmSendToFBR] FBR Data:', {
+            fbrInvoiceNumber: fbrInvNo,
+            fbrResponseStatus: 'Valid',
+            fbrResponseMessage: response.validationResponse?.invoiceStatuses?.[0]?.invoiceNo || ''
+        });
+
         if (targetInvoiceId) {
-          try {
-            const internalInvoiceNo = response.validationResponse?.invoiceStatuses?.[0]?.invoiceNo || '';
-            await invoiceAPI.updateFbrStatus(targetInvoiceId, {
-              fbrInvoiceNumber: response.invoiceNumber || '',
-              fbrResponseStatus: 'Valid',
-              fbrResponseMessage: internalInvoiceNo
-            });
-          } catch (err) {
+            try {
+              const internalInvoiceNo = response.validationResponse?.invoiceStatuses?.[0]?.invoiceNo || '';
+              const updateResult = await invoiceAPI.updateFbrStatus(
+                targetInvoiceId, 
+                {
+                  fbrInvoiceNumber: fbrInvNo,
+                  fbrResponseStatus: 'Valid',
+                  fbrResponseMessage: internalInvoiceNo
+                },
+                selectedCompanyId
+              );
+              
+              console.log('[confirmSendToFBR] Update Result:', updateResult);
+              
+              // Update local editingInvoice state to reflect FBR submission
+              if (updateResult.success && editingInvoice) {
+                setEditingInvoice({
+                  ...editingInvoice,
+                  fbrInvoiceNumber: fbrInvNo,
+                  fbrResponseStatus: 'Valid',
+                  fbrResponseMessage: internalInvoiceNo
+                });
+              }
+            } catch (err) {
             console.error('Failed to update FBR status in database:', err);
           }
         } else {

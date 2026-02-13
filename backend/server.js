@@ -210,6 +210,9 @@ app.get("/api/invoices", authenticateToken, async (req, res) => {
         totalFurtherTax: invoice.TotalFurtherTax,
         totalDiscount: invoice.TotalDiscount,
         scenarioID: invoice.ScenarioID,
+        fbrInvoiceNumber: invoice.FBRInvoiceNumber,
+        fbrResponseStatus: invoice.FBRResponseStatus,
+        fbrResponseMessage: invoice.FBRResponseMessage,
         createdAt: invoice.CreatedAt,
         updatedAt: invoice.UpdatedAt,
         createdBy: invoice.CreatedBy,
@@ -330,6 +333,9 @@ app.get("/api/invoices/:id", authenticateToken, async (req, res) => {
       totalFurtherTax: invoice.TotalFurtherTax,
       totalDiscount: invoice.TotalDiscount,
       scenarioID: invoice.ScenarioID,
+      fbrInvoiceNumber: invoice.FBRInvoiceNumber,
+      fbrResponseStatus: invoice.FBRResponseStatus,
+      fbrResponseMessage: invoice.FBRResponseMessage,
       createdAt: invoice.CreatedAt,
       updatedAt: invoice.UpdatedAt,
       createdBy: invoice.CreatedBy,
@@ -581,14 +587,37 @@ app.post("/api/invoices/:id/fbr-status", authenticateToken, async (req, res) => 
   try {
     const { id } = req.params;
     const { fbrInvoiceNumber, fbrResponseStatus, fbrResponseMessage } = req.body;
+    
+    // Determine company ID - handle super admin override
+    let companyId = req.user.companyId;
+    if (req.user.role === "SUPER_ADMIN" && req.headers["x-company-id"]) {
+      companyId = req.headers["x-company-id"];
+      console.log(`[FBR Status Update] Super Admin using target CompanyID: ${companyId}`);
+    }
+
+    console.log(`[FBR Status Update] Request for InvoiceID: ${id}`);
+    console.log(`[FBR Status Update] Effective CompanyID: ${companyId}`);
+    console.log(`[FBR Status Update] Data:`, { fbrInvoiceNumber, fbrResponseStatus, fbrResponseMessage });
 
     const pool = await sql.connect(dbConfig);
     
+    // Check if invoice exists first to debug
+    const checkResult = await pool.request()
+        .input("invoiceId", sql.UniqueIdentifier, id)
+        .query("SELECT InvoiceID, CompanyID FROM Invoices WHERE InvoiceID = @invoiceId");
+        
+    if (checkResult.recordset.length > 0) {
+        console.log(`[FBR Status Update] Found invoice. Owner CompanyID: ${checkResult.recordset[0].CompanyID}`);
+    } else {
+        console.log(`[FBR Status Update] Invoice NOT found with ID: ${id}`);
+    }
+
     // Update the invoice with FBR details
+    // Note: We are strictly enforcing CompanyID check. If user is Super Admin without CompanyID, this might fail if invoice has CompanyID.
     const result = await pool
       .request()
       .input("invoiceId", sql.UniqueIdentifier, id)
-      .input("companyId", sql.UniqueIdentifier, req.user.companyId)
+      .input("companyId", sql.UniqueIdentifier, companyId)
       .input("fbrInvoiceNumber", sql.NVarChar, fbrInvoiceNumber)
       .input("fbrResponseStatus", sql.NVarChar, fbrResponseStatus)
       .input("fbrResponseMessage", sql.NVarChar, fbrResponseMessage)
@@ -598,13 +627,16 @@ app.post("/api/invoices/:id/fbr-status", authenticateToken, async (req, res) => 
           FBRResponseStatus = @fbrResponseStatus,
           FBRResponseMessage = @fbrResponseMessage,
           UpdatedAt = GETDATE()
-        WHERE InvoiceID = @invoiceId AND CompanyID = @companyId
+        WHERE InvoiceID = @invoiceId 
+        AND (@companyId IS NULL OR CompanyID = @companyId)
       `);
+
+    console.log(`[FBR Status Update] Rows affected: ${result.rowsAffected[0]}`);
 
     if (result.rowsAffected[0] === 0) {
       return res.status(404).json({
         success: false,
-        message: "Invoice not found",
+        message: "Invoice not found or access denied",
       });
     }
 

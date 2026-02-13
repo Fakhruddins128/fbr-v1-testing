@@ -125,12 +125,13 @@ class InvoiceApi {
       fbrInvoiceNumber: string;
       fbrResponseStatus: string;
       fbrResponseMessage: string;
-    }
+    },
+    companyId?: string
   ): Promise<InvoiceResponse> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/invoices/${invoiceId}/fbr-status`, {
         method: 'POST',
-        headers: this.getAuthHeaders(),
+        headers: this.getAuthHeaders(companyId),
         body: JSON.stringify(fbrData),
       });
 

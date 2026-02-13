@@ -81,6 +81,7 @@ export interface FBRApiResponse {
   status: string;
   message: string;
   invoiceNumber?: string;
+  InvoiceNumber?: string; // Add PascalCase fallback
   errors?: string[];
   validationResponse?: {
     statusCode: string;
