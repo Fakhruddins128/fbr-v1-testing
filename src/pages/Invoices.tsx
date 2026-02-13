@@ -595,13 +595,19 @@ const Invoices: React.FC = () => {
       const quantity = Number(item.quantity) || 0;
       const rate = Number(item.rate) || 0;
       const totalValues = Number(item.totalValues) || 0;
+      const valueSalesExcludingST = Number(item.valueSalesExcludingST) || 0;
+      const fixedValue = Number(item.fixedNotifiedValueOrRetailPrice) || 0;
+      
       const salesTax = Number(item.salesTaxApplicable) || 0;
       const furtherTax = Number(item.furtherTax) || 0;
       const extraTax = Number(item.extraTax) || 0;
       const discount = Number(item.discount) || 0;
 
-      // If totalValues is present, use it; otherwise calculate from quantity * rate
-      const itemValue = (totalValues > 0) ? totalValues : (quantity * rate);
+      // Priority: TotalValues -> ValueSalesExcludingST -> FixedValue -> Quantity * Rate
+      let itemValue = totalValues;
+      if (itemValue <= 0) itemValue = valueSalesExcludingST;
+      if (itemValue <= 0) itemValue = fixedValue;
+      if (itemValue <= 0) itemValue = quantity * rate;
 
       const itemTotal = itemValue + salesTax + furtherTax + extraTax;
       return sum + itemTotal - discount;
