@@ -242,6 +242,10 @@ const Invoices: React.FC = () => {
   };
 
   const handleEditInvoice = (invoice: Invoice) => {
+    if (invoice.fbrInvoiceNumber) {
+      setSnackbar({ open: true, message: 'Cannot edit FBR submitted invoice', severity: 'error' });
+      return;
+    }
     navigate(`/sales-invoice/edit/${invoice.invoiceID}`);
   };
 
@@ -1268,10 +1272,10 @@ const Invoices: React.FC = () => {
               invoiceData={{
                 invoiceType: printInvoice.invoiceType,
                 invoiceDate: printInvoice.invoiceDate,
-                sellerNTNCNIC: printInvoice.sellerNTNCNIC,
-                sellerBusinessName: printInvoice.sellerBusinessName,
-                sellerProvince: printInvoice.sellerProvince,
-                sellerAddress: printInvoice.sellerAddress,
+                sellerNTNCNIC: printInvoice.sellerNTNCNIC || currentCompany?.ntnNumber || '',
+                sellerBusinessName: printInvoice.sellerBusinessName || currentCompany?.name || '',
+                sellerProvince: printInvoice.sellerProvince || currentCompany?.province || '',
+                sellerAddress: printInvoice.sellerAddress || currentCompany?.address || '',
                 buyerNTNCNIC: printInvoice.buyerNTNCNIC,
                 buyerBusinessName: printInvoice.buyerBusinessName,
                 buyerProvince: printInvoice.buyerProvince,
