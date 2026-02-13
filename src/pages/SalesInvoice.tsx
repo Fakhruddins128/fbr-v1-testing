@@ -1016,7 +1016,7 @@ const SalesInvoice: React.FC = () => {
   const [notification, setNotification] = useState<{
     open: boolean;
     message: string;
-    severity: 'success' | 'error' | 'info';
+    severity: 'success' | 'error' | 'info' | 'warning';
   }>({ open: false, message: '', severity: 'success' });
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
   const [formData, setFormData] = useState<InvoiceFormData>({
