@@ -613,7 +613,21 @@ app.post("/api/invoices/:id/fbr-status", authenticateToken, async (req, res) => 
     }
 
     // Update the invoice with FBR details
-    // Note: We are strictly enforcing CompanyID check. If user is Super Admin without CompanyID, this might fail if invoice has CompanyID.
+    // For SUPER_ADMIN, we skip the CompanyID check to ensure they can update any invoice
+    // For regular users, we strictly enforce CompanyID ownership
+    let updateQuery = `
+      UPDATE Invoices SET
+        FBRInvoiceNumber = @fbrInvoiceNumber,
+        FBRResponseStatus = @fbrResponseStatus,
+        FBRResponseMessage = @fbrResponseMessage,
+        UpdatedAt = GETDATE()
+      WHERE InvoiceID = @invoiceId 
+    `;
+
+    if (req.user.role !== 'SUPER_ADMIN') {
+      updateQuery += ` AND CompanyID = @companyId`;
+    }
+
     const result = await pool
       .request()
       .input("invoiceId", sql.UniqueIdentifier, id)
@@ -621,15 +635,7 @@ app.post("/api/invoices/:id/fbr-status", authenticateToken, async (req, res) => 
       .input("fbrInvoiceNumber", sql.NVarChar, fbrInvoiceNumber)
       .input("fbrResponseStatus", sql.NVarChar, fbrResponseStatus)
       .input("fbrResponseMessage", sql.NVarChar, fbrResponseMessage)
-      .query(`
-        UPDATE Invoices SET
-          FBRInvoiceNumber = @fbrInvoiceNumber,
-          FBRResponseStatus = @fbrResponseStatus,
-          FBRResponseMessage = @fbrResponseMessage,
-          UpdatedAt = GETDATE()
-        WHERE InvoiceID = @invoiceId 
-        AND (@companyId IS NULL OR CompanyID = @companyId)
-      `);
+      .query(updateQuery);
 
     console.log(`[FBR Status Update] Rows affected: ${result.rowsAffected[0]}`);
 
