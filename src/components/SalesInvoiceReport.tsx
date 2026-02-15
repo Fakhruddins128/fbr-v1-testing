@@ -66,6 +66,7 @@ interface SalesInvoiceReportProps {
     buyerProvince: string;
     buyerAddress: string;
     invoiceRefNo: string;
+    poNumber?: string;
     buyerRegistrationType: string;
     scenarioId: string;
     items: InvoiceItem[];
@@ -168,6 +169,7 @@ const SalesInvoiceReport: React.FC<SalesInvoiceReportProps> = ({ invoiceData, fb
         </Grid>
         <Grid size={{ xs: 6 }}>
           <Typography variant="body2"><strong>Reference No:</strong> {invoiceData.invoiceRefNo || 'N/A'}</Typography>
+          <Typography variant="body2"><strong>PO No.:</strong> {invoiceData.poNumber || 'N/A'}</Typography>
         </Grid>
       </Grid>
 

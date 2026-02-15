@@ -72,6 +72,7 @@ interface InvoiceFormData {
   invoiceType: string;
   transactionType: string;
   invoiceNo: string;
+  poNumber: string;
   invoiceDate: string;
   saleOriginationProvince: string;
   destinationOfSupply: string;
@@ -1026,6 +1027,7 @@ const SalesInvoice: React.FC = () => {
     invoiceType: 'Select',
     transactionType: 'Select',
     invoiceNo: '',
+    poNumber: '',
     invoiceDate: new Date().toISOString().split('T')[0],
     saleOriginationProvince: 'Select',
     destinationOfSupply: 'Select',
@@ -1070,6 +1072,7 @@ const SalesInvoice: React.FC = () => {
               invoiceType: invoice.invoiceType || 'Select',
               transactionType: mapInvoiceTypeToTransactionType(invoice.invoiceType || ''), // Map from invoiceType field
               invoiceNo: invoice.invoiceRefNo || '',
+              poNumber: '',
               invoiceDate: invoice.invoiceDate ? invoice.invoiceDate.split('T')[0] : new Date().toISOString().split('T')[0],
               saleOriginationProvince: invoice.sellerProvince || 'Select',
               destinationOfSupply: invoice.buyerProvince || 'Select',
@@ -1788,6 +1791,7 @@ const SalesInvoice: React.FC = () => {
       buyerProvince: formData.destinationOfSupply,
       buyerAddress: 'Buyer Address',
       invoiceRefNo: formData.invoiceNo,
+      poNumber: formData.poNumber,
       buyerRegistrationType: formData.buyerType,
       scenarioId: determineFbrScenario(),
       items: formData.items.map(item => ({
@@ -2033,7 +2037,7 @@ const SalesInvoice: React.FC = () => {
           </Grid>
 
           {/* Second Row */}
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               fullWidth
               select
@@ -2051,7 +2055,7 @@ const SalesInvoice: React.FC = () => {
               ))}
             </TextField>
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               fullWidth
               select
@@ -2069,12 +2073,22 @@ const SalesInvoice: React.FC = () => {
               ))}
             </TextField>
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               fullWidth
               label="Invoice No."
               value={formData.invoiceNo}
               onChange={(e) => handleInputChange('invoiceNo', e.target.value)}
+              size="small"
+              disabled={isInvoiceSentToFBR()}
+            />
+          </Grid>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <TextField
+              fullWidth
+              label="PO No."
+              value={formData.poNumber}
+              onChange={(e) => handleInputChange('poNumber', e.target.value)}
               size="small"
               disabled={isInvoiceSentToFBR()}
             />
