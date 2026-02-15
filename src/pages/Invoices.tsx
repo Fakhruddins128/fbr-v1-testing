@@ -585,13 +585,10 @@ const Invoices: React.FC = () => {
 
   // Statistics calculations
   const calculateInvoiceTotal = (invoice: Invoice) => {
-    // Check if totalAmount exists and is a valid number
     const totalAmount = Number(invoice.totalAmount);
     if (!isNaN(totalAmount) && totalAmount > 0) return totalAmount;
     
-    // Fallback calculation if totalAmount is 0 or invalid
     return invoice.items.reduce((sum, item) => {
-      // Safely get numeric values
       const quantity = Number(item.quantity) || 0;
       const rate = Number(item.rate) || 0;
       const totalValues = Number(item.totalValues) || 0;
@@ -603,7 +600,6 @@ const Invoices: React.FC = () => {
       const extraTax = Number(item.extraTax) || 0;
       const discount = Number(item.discount) || 0;
 
-      // Priority: TotalValues -> ValueSalesExcludingST -> FixedValue -> Quantity * Rate
       let itemValue = totalValues;
       if (itemValue <= 0) itemValue = valueSalesExcludingST;
       if (itemValue <= 0) itemValue = fixedValue;
@@ -618,6 +614,7 @@ const Invoices: React.FC = () => {
   const totalAmount = invoices.reduce((sum, invoice) => sum + (calculateInvoiceTotal(invoice) || 0), 0);
   const totalSalesTax = invoices.reduce((sum, invoice) => sum + (Number(invoice.totalSalesTax) || 0), 0);
   const avgInvoiceValue = totalInvoices > 0 ? totalAmount / totalInvoices : 0;
+  const fbrSubmittedInvoices = invoices.filter(invoice => !!invoice.fbrInvoiceNumber).length;
 
 
   if (loading) {
@@ -660,7 +657,7 @@ const Invoices: React.FC = () => {
                 <ReceiptIcon color="primary" sx={{ mr: 2 }} />
                 <Box>
                   <Typography color="textSecondary" gutterBottom>
-                    Total Invoices
+                    Total Generated Invoices No.
                   </Typography>
                   <Typography variant="h5">
                     {totalInvoices}
@@ -711,10 +708,10 @@ const Invoices: React.FC = () => {
                 <AssessmentIcon color="info" sx={{ mr: 2 }} />
                 <Box>
                   <Typography color="textSecondary" gutterBottom>
-                    Avg Invoice Value
+                    Total FBR Generated Invoices No.
                   </Typography>
                   <Typography variant="h5">
-                    {formatCurrency(avgInvoiceValue)}
+                    {fbrSubmittedInvoices}
                   </Typography>
                 </Box>
               </Box>
@@ -729,6 +726,7 @@ const Invoices: React.FC = () => {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
+                <TableCell>SNo.</TableCell>
                 <TableCell>Invoice Date</TableCell>
                 <TableCell>Invoice Type</TableCell>
                 <TableCell>FBR Invoice No</TableCell>
@@ -743,8 +741,9 @@ const Invoices: React.FC = () => {
             <TableBody>
               {invoices
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((invoice) => (
+                .map((invoice, index) => (
                 <TableRow key={invoice.invoiceID} hover>
+                  <TableCell>{page * rowsPerPage + index + 1}</TableCell>
                   <TableCell>{formatDate(invoice.invoiceDate)}</TableCell>
                   <TableCell>
                     <Chip 
