@@ -613,7 +613,6 @@ const Invoices: React.FC = () => {
   const totalInvoices = invoices.length;
   const totalAmount = invoices.reduce((sum, invoice) => sum + (calculateInvoiceTotal(invoice) || 0), 0);
   const totalSalesTax = invoices.reduce((sum, invoice) => sum + (Number(invoice.totalSalesTax) || 0), 0);
-  const avgInvoiceValue = totalInvoices > 0 ? totalAmount / totalInvoices : 0;
   const fbrSubmittedInvoices = invoices.filter(invoice => !!invoice.fbrInvoiceNumber).length;
 
 
