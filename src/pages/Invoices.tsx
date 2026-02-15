@@ -1318,6 +1318,7 @@ const Invoices: React.FC = () => {
                 buyerProvince: printInvoice.buyerProvince,
                 buyerAddress: printInvoice.buyerAddress,
                 invoiceRefNo: printInvoice.invoiceRefNo,
+                poNumber: printInvoice.poNumber,
                 buyerRegistrationType: printInvoice.buyerRegistrationType,
                 scenarioId: printInvoice.scenarioID,
                 items: printInvoice.items
