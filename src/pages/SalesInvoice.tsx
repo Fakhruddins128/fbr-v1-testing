@@ -1342,6 +1342,7 @@ const SalesInvoice: React.FC = () => {
       invoiceType: 'Select',
       transactionType: 'Select',
       invoiceNo: '',
+      poNumber: '',
       invoiceDate: new Date().toISOString().split('T')[0],
       saleOriginationProvince: 'Select',
       destinationOfSupply: 'Select',
