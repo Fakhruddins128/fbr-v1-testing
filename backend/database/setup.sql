@@ -84,6 +84,7 @@ BEGIN
         BuyerAddress NVARCHAR(255) NOT NULL,
         BuyerRegistrationType NVARCHAR(20) NOT NULL,
         InvoiceRefNo NVARCHAR(50) NOT NULL,
+        PONumber NVARCHAR(50) NULL,
         ScenarioID NVARCHAR(20) NOT NULL,
         TotalAmount DECIMAL(18, 2) NOT NULL,
         TotalSalesTax DECIMAL(18, 2) NOT NULL,

@@ -205,6 +205,7 @@ app.get("/api/invoices", authenticateToken, async (req, res) => {
         buyerAddress: invoice.BuyerAddress,
         buyerRegistrationType: invoice.BuyerRegistrationType,
         invoiceRefNo: invoice.InvoiceRefNo,
+        poNumber: invoice.PONumber,
         totalAmount: invoice.TotalAmount,
         totalSalesTax: invoice.TotalSalesTax,
         totalFurtherTax: invoice.TotalFurtherTax,
@@ -328,6 +329,7 @@ app.get("/api/invoices/:id", authenticateToken, async (req, res) => {
       buyerAddress: invoice.BuyerAddress,
       buyerRegistrationType: invoice.BuyerRegistrationType,
       invoiceRefNo: invoice.InvoiceRefNo,
+      poNumber: invoice.PONumber,
       totalAmount: invoice.TotalAmount,
       totalSalesTax: invoice.TotalSalesTax,
       totalFurtherTax: invoice.TotalFurtherTax,
@@ -374,6 +376,7 @@ app.post("/api/invoices", authenticateToken, async (req, res) => {
       buyerAddress,
       buyerRegistrationType,
       invoiceRefNo,
+      poNumber,
       items,
     } = req.body;
 
@@ -442,6 +445,8 @@ app.post("/api/invoices", authenticateToken, async (req, res) => {
         .input("buyerAddress", sql.NVarChar, buyerAddress)
         .input("buyerRegistrationType", sql.NVarChar, buyerRegistrationType)
         .input("invoiceRefNo", sql.NVarChar, invoiceRefNo || "")
+        .input("poNumber", sql.NVarChar, poNumber || "")
+        .input("poNumber", sql.NVarChar, poNumber || "")
         .input("scenarioID", sql.NVarChar, "SCENARIO_001")
         .input("totalAmount", sql.Decimal(18, 2), totalAmount)
         .input("totalSalesTax", sql.Decimal(18, 2), totalSalesTax)
@@ -451,14 +456,14 @@ app.post("/api/invoices", authenticateToken, async (req, res) => {
           INSERT INTO Invoices (
             CompanyID, InvoiceNumber, InvoiceType, InvoiceDate, SellerNTNCNIC, SellerBusinessName,
             SellerProvince, SellerAddress, BuyerNTNCNIC, BuyerBusinessName,
-            BuyerProvince, BuyerAddress, BuyerRegistrationType, InvoiceRefNo,
+            BuyerProvince, BuyerAddress, BuyerRegistrationType, InvoiceRefNo, PONumber,
             ScenarioID, TotalAmount, TotalSalesTax, TotalFurtherTax, TotalDiscount, CreatedBy
           )
           OUTPUT INSERTED.InvoiceID
           VALUES (
             @companyId, @invoiceNumber, @invoiceType, @invoiceDate, @sellerNTNCNIC, @sellerBusinessName,
             @sellerProvince, @sellerAddress, @buyerNTNCNIC, @buyerBusinessName,
-            @buyerProvince, @buyerAddress, @buyerRegistrationType, @invoiceRefNo,
+            @buyerProvince, @buyerAddress, @buyerRegistrationType, @invoiceRefNo, @poNumber,
             @scenarioID, @totalAmount, @totalSalesTax, @totalFurtherTax, @totalDiscount, @createdBy
           )
         `);
@@ -677,6 +682,7 @@ app.put("/api/invoices/:id", authenticateToken, async (req, res) => {
       buyerAddress,
       buyerRegistrationType,
       invoiceRefNo,
+      poNumber,
       items,
     } = req.body;
 
@@ -728,6 +734,7 @@ app.put("/api/invoices/:id", authenticateToken, async (req, res) => {
         .input("buyerAddress", sql.NVarChar, buyerAddress)
         .input("buyerRegistrationType", sql.NVarChar, buyerRegistrationType)
         .input("invoiceRefNo", sql.NVarChar, invoiceRefNo || "")
+        .input("poNumber", sql.NVarChar, poNumber || "")
         .input("totalAmount", sql.Decimal(18, 2), totalAmount)
         .input("totalSalesTax", sql.Decimal(18, 2), totalSalesTax)
         .input("totalFurtherTax", sql.Decimal(18, 2), totalFurtherTax)
@@ -745,6 +752,7 @@ app.put("/api/invoices/:id", authenticateToken, async (req, res) => {
             BuyerAddress = @buyerAddress,
             BuyerRegistrationType = @buyerRegistrationType,
             InvoiceRefNo = @invoiceRefNo,
+            PONumber = @poNumber,
             TotalAmount = @totalAmount,
             TotalSalesTax = @totalSalesTax,
             TotalFurtherTax = @totalFurtherTax,

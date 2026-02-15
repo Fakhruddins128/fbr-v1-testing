@@ -1064,19 +1064,18 @@ const SalesInvoice: React.FC = () => {
              const invoice = Array.isArray(response.data) ? response.data[0] : response.data;
              setEditingInvoice(invoice);
             
-            // Map invoice data to form data
             setFormData({
               buyerRegistrationNo: invoice.buyerNTNCNIC || '',
               buyerName: invoice.buyerBusinessName || '',
               buyerType: invoice.buyerRegistrationType || 'Unregistered',
               invoiceType: invoice.invoiceType || 'Select',
-              transactionType: mapInvoiceTypeToTransactionType(invoice.invoiceType || ''), // Map from invoiceType field
+              transactionType: mapInvoiceTypeToTransactionType(invoice.invoiceType || ''),
               invoiceNo: invoice.invoiceRefNo || '',
-              poNumber: '',
+              poNumber: invoice.poNumber || '',
               invoiceDate: invoice.invoiceDate ? invoice.invoiceDate.split('T')[0] : new Date().toISOString().split('T')[0],
               saleOriginationProvince: invoice.sellerProvince || 'Select',
               destinationOfSupply: invoice.buyerProvince || 'Select',
-              saleType: invoice.items && invoice.items.length > 0 ? invoice.items[0].saleType || 'Select' : 'Select', // Map from first item's saleType
+              saleType: invoice.items && invoice.items.length > 0 ? invoice.items[0].saleType || 'Select' : 'Select',
 
               items: invoice.items.map((item: any) => {
                 // Find matching item from items list to get full description
@@ -1862,6 +1861,7 @@ const SalesInvoice: React.FC = () => {
         buyerAddress: 'Buyer Address', // You may want to add this field to the form
         buyerRegistrationType: formData.buyerType,
         invoiceRefNo: formData.invoiceNo,
+        poNumber: formData.poNumber,
         totalAmount,
         totalSalesTax,
         totalFurtherTax,

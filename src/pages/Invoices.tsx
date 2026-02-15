@@ -725,6 +725,7 @@ const Invoices: React.FC = () => {
           <Table stickyHeader>
             <TableHead>
               <TableRow>
+                <TableCell>Actions</TableCell>
                 <TableCell>SNo.</TableCell>
                 <TableCell>Invoice Date</TableCell>
                 <TableCell>Invoice Type</TableCell>
@@ -742,36 +743,6 @@ const Invoices: React.FC = () => {
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((invoice, index) => (
                 <TableRow key={invoice.invoiceID} hover>
-                  <TableCell>{page * rowsPerPage + index + 1}</TableCell>
-                  <TableCell>{formatDate(invoice.invoiceDate)}</TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={invoice.invoiceType} 
-                      color="primary" 
-                      size="small" 
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {invoice.fbrInvoiceNumber ? (
-                      <Chip 
-                        label={invoice.fbrInvoiceNumber} 
-                        color="success" 
-                        size="small" 
-                        variant="outlined"
-                      />
-                    ) : '-'}
-                  </TableCell>
-                  <TableCell>{invoice.invoiceRefNo || invoice.invoiceID.substring(0, 8)}</TableCell>
-                  <TableCell>{invoice.buyerBusinessName}</TableCell>
-                  <TableCell>{formatCurrency(calculateInvoiceTotal(invoice))}</TableCell>
-                  <TableCell>{formatCurrency(invoice.totalSalesTax || 0)}</TableCell>
-                  <TableCell>
-                    <Chip 
-                      label={`${invoice.items.length} items`} 
-                      size="small" 
-                      variant="outlined"
-                    />
-                  </TableCell>
                   <TableCell>
                     <Tooltip title="Print">
                       <IconButton 
@@ -803,6 +774,36 @@ const Invoices: React.FC = () => {
                         <DeleteIcon />
                       </IconButton>
                     </Tooltip>
+                  </TableCell>
+                  <TableCell>{page * rowsPerPage + index + 1}</TableCell>
+                  <TableCell>{formatDate(invoice.invoiceDate)}</TableCell>
+                  <TableCell>
+                    <Chip 
+                      label={invoice.invoiceType} 
+                      color="primary" 
+                      size="small" 
+                    />
+                  </TableCell>
+                  <TableCell>
+                    {invoice.fbrInvoiceNumber ? (
+                      <Chip 
+                        label={invoice.fbrInvoiceNumber} 
+                        color="success" 
+                        size="small" 
+                        variant="outlined"
+                      />
+                    ) : '-'}
+                  </TableCell>
+                  <TableCell>{invoice.invoiceRefNo || invoice.invoiceID.substring(0, 8)}</TableCell>
+                  <TableCell>{invoice.buyerBusinessName}</TableCell>
+                  <TableCell>{formatCurrency(calculateInvoiceTotal(invoice))}</TableCell>
+                  <TableCell>{formatCurrency(invoice.totalSalesTax || 0)}</TableCell>
+                  <TableCell>
+                    <Chip 
+                      label={`${invoice.items.length} items`} 
+                      size="small" 
+                      variant="outlined"
+                    />
                   </TableCell>
                 </TableRow>
               ))}
