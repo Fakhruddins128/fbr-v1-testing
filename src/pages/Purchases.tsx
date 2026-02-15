@@ -32,6 +32,7 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Visibility as ViewIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { itemsApi, Item } from '../api/itemsApi';
 import { formatCurrency } from '../utils/formatUtils';
@@ -329,6 +330,26 @@ const Purchases: React.FC = () => {
     }
   };
 
+  const handleDeletePurchase = async (purchase: Purchase) => {
+    if (!purchase.id) return;
+    const confirmed = window.confirm('Are you sure you want to delete this purchase order?');
+    if (!confirmed) return;
+
+    try {
+      const userParam = user ? { role: user.role, companyId: user.companyId } : undefined;
+      const response = await purchasesApi.deletePurchase(purchase.id, userParam);
+
+      if (response.success) {
+        showSnackbar('Purchase deleted successfully', 'success');
+        fetchPurchases();
+      } else {
+        showSnackbar(response.message || 'Failed to delete purchase', 'error');
+      }
+    } catch (error) {
+      showSnackbar('Failed to delete purchase', 'error');
+    }
+  };
+
   const handleSubmit = async () => {
     if (!formData.poNumber || !formData.crNumber || !formData.vendorId || !formData.vendorName || formData.items.some(item => !item.itemId || item.purchaseQty <= 0)) {
       showSnackbar('Please fill in all required fields', 'error');
@@ -525,6 +546,13 @@ const Purchases: React.FC = () => {
                     </IconButton>
                     <IconButton size="small" onClick={() => handleEditPurchase(purchase)}>
                       <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => handleDeletePurchase(purchase)}
+                    >
+                      <DeleteIcon />
                     </IconButton>
                   </TableCell>
                 </TableRow>
