@@ -765,14 +765,17 @@ const Invoices: React.FC = () => {
                         </IconButton>
                       </span>
                     </Tooltip>
-                    <Tooltip title="Delete">
-                      <IconButton 
-                        size="small" 
-                        onClick={() => handleDelete(invoice.invoiceID!)}
-                        color="error"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                    <Tooltip title={invoice.fbrInvoiceNumber ? "Cannot delete FBR submitted invoice" : "Delete"}>
+                      <span>
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handleDelete(invoice.invoiceID!)}
+                          color="error"
+                          disabled={!!invoice.fbrInvoiceNumber}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </span>
                     </Tooltip>
                   </TableCell>
                   <TableCell>{page * rowsPerPage + index + 1}</TableCell>
