@@ -74,6 +74,40 @@ class CustomerApi {
     }
   }
 
+  async lookupCustomerByRegistrationNo(registrationNo: string): Promise<ApiResponse<Customer>> {
+    try {
+      const selectedCompanyId = localStorage.getItem('selectedCompanyId');
+      const headers = this.getAuthHeaders();
+      
+      // If super admin has a company selected, pass it in headers
+      const fetchHeaders = { ...headers } as Record<string, string>;
+      if (selectedCompanyId) {
+        fetchHeaders['X-Company-ID'] = selectedCompanyId;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/customers/lookup/${registrationNo}`, {
+        method: 'GET',
+        headers: fetchHeaders,
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return { success: false, message: 'Customer not found' };
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error looking up customer:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+      };
+    }
+  }
+
   async createCustomer(customerData: CreateCustomerRequest): Promise<ApiResponse<Customer>> {
     try {
       const response = await fetch(`${API_BASE_URL}/api/customers`, {

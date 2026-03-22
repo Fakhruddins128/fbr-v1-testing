@@ -3439,6 +3439,68 @@ app.get("/api/customers", authenticateToken, async (req, res) => {
   }
 });
 
+// Lookup customer by registration number
+app.get("/api/customers/lookup/:registrationNo", authenticateToken, async (req, res) => {
+  try {
+    const { registrationNo } = req.params;
+    let companyId = req.user.companyId;
+    if (req.user.role === "SUPER_ADMIN" && req.headers["x-company-id"]) {
+      companyId = req.headers["x-company-id"];
+    }
+
+    const pool = await sql.connect(dbConfig);
+    const result = await pool
+      .request()
+      .input("companyId", sql.UniqueIdentifier, companyId)
+      .input("registrationNo", sql.NVarChar(20), registrationNo).query(`
+        SELECT TOP 1
+          CustomerID as id,
+          Buyer_NTNCNIC as buyerNTNCNIC,
+          Buyer_Business_Name as buyerBusinessName,
+          Buyer_Province as buyerProvince,
+          Buyer_Address as buyerAddress,
+          Buyer_RegistrationType as buyerRegistrationType,
+          Buyer_RegistrationNo as buyerRegistrationNo,
+          Buyer_Email as buyerEmail,
+          Buyer_Cellphone as buyerCellphone,
+          ContactPersonName as contactPersonName,
+          BusinessActivity,
+          Sector,
+          IsActive as isActive
+        FROM Customers 
+        WHERE CompanyID = @companyId AND (Buyer_NTNCNIC = @registrationNo OR Buyer_RegistrationNo = @registrationNo) AND IsActive = 1
+      `);
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Customer not found",
+      });
+    }
+
+    const customer = result.recordset[0];
+    const formattedCustomer = {
+      ...customer,
+      businessActivity: customer.BusinessActivity
+        ? JSON.parse(customer.BusinessActivity)
+        : [],
+      sector: customer.Sector ? JSON.parse(customer.Sector) : [],
+    };
+
+    res.json({
+      success: true,
+      data: formattedCustomer,
+    });
+  } catch (error) {
+    console.error("Error looking up customer:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to lookup customer",
+      error: error.message,
+    });
+  }
+});
+
 // Create new customer
 app.post("/api/customers", authenticateToken, async (req, res) => {
   try {
