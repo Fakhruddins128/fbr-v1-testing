@@ -1112,14 +1112,15 @@ const SalesInvoice: React.FC = () => {
               saleType: invoice.items && invoice.items.length > 0 ? invoice.items[0].saleType || 'Select' : 'Select',
 
               items: invoice.items.map((item: any) => {
-                // Find matching item from items list to get full description
-                const matchingApiItem = items.find(apiItem => apiItem.hsCode === item.hsCode);
+                // Find matching item from items list using itemRefID (more reliable than hsCode)
+                const matchingApiItem = items.find(apiItem => apiItem.itemId === item.itemRefID);
                 const hsCodeDescription = matchingApiItem 
                   ? `${matchingApiItem.hsCode} - ${matchingApiItem.description}`
-                  : item.hsCode || 'Select';
+                  : item.hsCode ? `${item.hsCode} - ${item.productDescription || ''}` : 'Select';
                   
                 return {
                   id: item.itemID || Math.random().toString(36).substr(2, 9),
+                  itemId: item.itemRefID,
                   hsCodeDescription: hsCodeDescription,
                 productDescription: item.productDescription || '',
                 rate: item.rate || 'Select',
