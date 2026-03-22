@@ -239,6 +239,7 @@ const Items: React.FC = () => {
           purchaseTaxValue: parseFloat(values[headers.indexOf('purchasetaxvalue')]) || 0,
           salesTaxValue: parseFloat(values[headers.indexOf('salestaxvalue')]) || 0,
           uom: values[headers.indexOf('uom')] || 'Numbers, pieces, units',
+          initialStock: parseFloat(values[headers.indexOf('initialstock')]) || 0,
         };
 
         if (item.hsCode && item.description && item.unitPrice > 0) {
@@ -279,13 +280,15 @@ const Items: React.FC = () => {
       return;
     }
 
-    const headers = ['HSCode', 'Description', 'UnitPrice', 'PurchaseTaxValue', 'SalesTaxValue', 'ItemCreateDate'];
+    const headers = ['HSCode', 'Description', 'UnitPrice', 'InitialStock', 'CurrentStock', 'PurchaseTaxValue', 'SalesTaxValue', 'ItemCreateDate'];
     const csvContent = [
       headers.join(','),
       ...items.map(item => [
         item.hsCode,
         `"${item.description}"`,
         item.unitPrice,
+        item.initialStock || 0,
+        item.currentStock || 0,
         item.purchaseTaxValue,
         item.salesTaxValue,
         item.itemCreateDate
