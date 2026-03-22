@@ -1037,6 +1037,11 @@ const SalesInvoice: React.FC = () => {
     items: []
   });
 
+  // Helper function to check if invoice has been successfully sent to FBR
+  const isInvoiceSentToFBR = useCallback(() => {
+    return fbrResponse && fbrResponse.validationResponse && fbrResponse.validationResponse.status === 'Valid';
+  }, [fbrResponse]);
+
   // Fetch items from API
   useEffect(() => {
     const fetchItems = async () => {
@@ -1056,31 +1061,31 @@ const SalesInvoice: React.FC = () => {
   }, []);
 
   // Auto-fill buyer name from customer registration number
-  useEffect(() => {
-    const lookupCustomer = async () => {
-      const regNo = formData.buyerRegistrationNo?.trim();
-      // Only lookup if registration number is at least 7 characters (typical NTN/CNIC length)
-      if (regNo && regNo.length >= 7 && !isInvoiceSentToFBR()) {
-        try {
-          const response = await customerApi.lookupCustomerByRegistrationNo(regNo);
-          if (response.success && response.data) {
-            const customer = response.data;
-            setFormData(prev => ({
-              ...prev,
-              buyerName: customer.buyerBusinessName || prev.buyerName,
-              buyerType: customer.buyerRegistrationType || prev.buyerType,
-              destinationOfSupply: customer.buyerProvince || prev.destinationOfSupply
-            }));
-          }
-        } catch (error) {
-          console.error('Error in customer lookup:', error);
+  const lookupCustomer = useCallback(async () => {
+    const regNo = formData.buyerRegistrationNo?.trim();
+    // Only lookup if registration number is at least 7 characters (typical NTN/CNIC length)
+    if (regNo && regNo.length >= 7 && !isInvoiceSentToFBR()) {
+      try {
+        const response = await customerApi.lookupCustomerByRegistrationNo(regNo);
+        if (response.success && response.data) {
+          const customer = response.data;
+          setFormData(prev => ({
+            ...prev,
+            buyerName: customer.buyerBusinessName || prev.buyerName,
+            buyerType: customer.buyerRegistrationType || prev.buyerType,
+            destinationOfSupply: customer.buyerProvince || prev.destinationOfSupply
+          }));
         }
+      } catch (error) {
+        console.error('Error in customer lookup:', error);
       }
-    };
+    }
+  }, [formData.buyerRegistrationNo, isInvoiceSentToFBR]);
 
+  useEffect(() => {
     const debounceTimer = setTimeout(lookupCustomer, 800);
     return () => clearTimeout(debounceTimer);
-  }, [formData.buyerRegistrationNo, isInvoiceSentToFBR]);
+  }, [lookupCustomer]);
 
   // Load invoice data when in edit mode
   useEffect(() => {
@@ -1791,11 +1796,6 @@ const SalesInvoice: React.FC = () => {
     setShowFbrPreview(false);
     setFbrPayloadPreview(null);
   };
-
-  // Helper function to check if invoice has been successfully sent to FBR
-  const isInvoiceSentToFBR = useCallback(() => {
-    return fbrResponse && fbrResponse.validationResponse && fbrResponse.validationResponse.status === 'Valid';
-  }, [fbrResponse]);
 
   const handlePreviewInvoice = () => {
     if (!invoiceSaved) {
