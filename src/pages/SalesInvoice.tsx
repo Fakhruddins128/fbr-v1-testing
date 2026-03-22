@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box,
@@ -1793,9 +1793,9 @@ const SalesInvoice: React.FC = () => {
   };
 
   // Helper function to check if invoice has been successfully sent to FBR
-  const isInvoiceSentToFBR = () => {
+  const isInvoiceSentToFBR = useCallback(() => {
     return fbrResponse && fbrResponse.validationResponse && fbrResponse.validationResponse.status === 'Valid';
-  };
+  }, [fbrResponse]);
 
   const handlePreviewInvoice = () => {
     if (!invoiceSaved) {
