@@ -677,7 +677,12 @@ const Purchases: React.FC = () => {
     </MenuItem>
     {items.map((it) => (
       <MenuItem key={it.itemId} value={it.itemId}>
-        {it.description} - {formatCurrency(it.unitPrice)}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+          <span>{it.hsCode} - {it.description}</span>
+          <span style={{ color: 'green', marginLeft: '10px' }}>
+            (Stock: {it.currentStock || 0})
+          </span>
+        </Box>
       </MenuItem>
     ))}
   </Select>

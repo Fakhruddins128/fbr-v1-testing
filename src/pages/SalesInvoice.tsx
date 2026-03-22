@@ -49,6 +49,7 @@ import SalesInvoiceReport from '../components/SalesInvoiceReport';
 // Types for the invoice form
 interface InvoiceItem {
   id: string;
+  itemId?: string;
   hsCodeDescription: string;
   productDescription: string;
   rate: string;
@@ -1124,6 +1125,7 @@ const SalesInvoice: React.FC = () => {
 
   const [currentItem, setCurrentItem] = useState<InvoiceItem>({
     id: '',
+    itemId: '',
     hsCodeDescription: 'Select',
     productDescription: '',
     rate: 'Select',
@@ -1227,14 +1229,15 @@ const SalesInvoice: React.FC = () => {
       // Auto-populate tax rate and UoM when HS Code is selected
       if (field === 'hsCodeDescription' && typeof value === 'string' && value !== 'Select') {
         // Find the selected item from the items array
-        const selectedItem = items.find(item => 
+        const selectedItemFromList = items.find(item => 
           `${item.hsCode} - ${item.description}` === value
         );
         
-        if (selectedItem) {
-          updatedItem.rate = selectedItem.salesTaxValue.toString() + '%';
-          updatedItem.uom = selectedItem.uom;
-          updatedItem.productDescription = selectedItem.description;
+        if (selectedItemFromList) {
+          updatedItem.itemId = selectedItemFromList.itemId;
+          updatedItem.rate = selectedItemFromList.salesTaxValue.toString() + '%';
+          updatedItem.uom = selectedItemFromList.uom;
+          updatedItem.productDescription = selectedItemFromList.description;
         }
       }
 
@@ -1259,6 +1262,22 @@ const SalesInvoice: React.FC = () => {
 
   const addItem = () => {
     if (currentItem.hsCodeDescription !== 'Select' && currentItem.productDescription) {
+      // Stock Validation
+      if (currentItem.itemId) {
+        const selectedItemFromList = items.find(item => item.itemId === currentItem.itemId);
+        if (selectedItemFromList) {
+          const currentStock = selectedItemFromList.currentStock || 0;
+          if (currentItem.quantity > currentStock) {
+            setNotification({
+              open: true,
+              message: `Insufficient stock for ${selectedItemFromList.description}. Available: ${currentStock}, Requested: ${currentItem.quantity}`,
+              severity: 'error'
+            });
+            return;
+          }
+        }
+      }
+
       const newItem = {
         ...currentItem,
         id: Date.now().toString()
@@ -1270,6 +1289,7 @@ const SalesInvoice: React.FC = () => {
       // Reset current item with proper sales tax reset
       setCurrentItem({
         id: '',
+        itemId: '',
         hsCodeDescription: 'Select',
         productDescription: '',
         rate: 'Select',
@@ -1316,6 +1336,7 @@ const SalesInvoice: React.FC = () => {
     // Populate the form with the item's data
     setCurrentItem({
       id: item.id,
+      itemId: item.itemId,
       hsCodeDescription: hsCodeDescriptionValue,
       productDescription: item.productDescription,
       rate: item.rate,
@@ -1350,6 +1371,7 @@ const SalesInvoice: React.FC = () => {
     });
     setCurrentItem({
       id: '',
+      itemId: '',
       hsCodeDescription: 'Select',
       productDescription: '',
       rate: 'Select',
@@ -1871,6 +1893,7 @@ const SalesInvoice: React.FC = () => {
         updatedAt: new Date().toISOString(),
         createdBy: user?.id || '',
         items: formData.items.map(item => ({
+          itemRefID: item.itemId,
           hsCode: item.hsCodeDescription.split(' - ')[0] || '',
           productDescription: item.productDescription,
           rate: item.rate,
@@ -2199,11 +2222,16 @@ const SalesInvoice: React.FC = () => {
               disabled={isInvoiceSentToFBR()}
             >
               <MenuItem value="Select">
-                Select
+                Select Item
               </MenuItem>
               {items.map((item) => (
                 <MenuItem key={item.itemId} value={`${item.hsCode} - ${item.description}`}>
-                  {item.hsCode} - {item.description}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                    <span>{item.hsCode} - {item.description}</span>
+                    <span style={{ color: (item.currentStock || 0) <= 0 ? 'red' : 'green', marginLeft: '10px' }}>
+                      (Stock: {item.currentStock || 0})
+                    </span>
+                  </Box>
                 </MenuItem>
               ))}
             </TextField>

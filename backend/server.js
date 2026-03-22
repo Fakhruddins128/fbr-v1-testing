@@ -138,6 +138,7 @@ app.get("/api/invoices", authenticateToken, async (req, res) => {
         OUTER APPLY (
           SELECT 
             ItemID,
+            ItemRefID,
             HSCode,
             ProductDescription,
             Rate,
@@ -168,6 +169,7 @@ app.get("/api/invoices", authenticateToken, async (req, res) => {
       const items = invoice.Items
         ? JSON.parse(invoice.Items).map((item) => ({
             itemID: item.ItemID,
+            itemRefID: item.ItemRefID,
             invoiceID: item.InvoiceID,
             hsCode: item.HSCode,
             productDescription: item.ProductDescription,
@@ -256,6 +258,7 @@ app.get("/api/invoices/:id", authenticateToken, async (req, res) => {
         OUTER APPLY (
           SELECT 
             ItemID,
+            ItemRefID,
             HSCode,
             ProductDescription,
             Rate,
@@ -293,6 +296,7 @@ app.get("/api/invoices/:id", authenticateToken, async (req, res) => {
     const items = invoice.Items
       ? JSON.parse(invoice.Items).map((item) => ({
           itemID: item.ItemID,
+          itemRefID: item.ItemRefID,
           invoiceID: item.InvoiceID,
           hsCode: item.HSCode,
           productDescription: item.ProductDescription,
@@ -475,6 +479,7 @@ app.post("/api/invoices", authenticateToken, async (req, res) => {
         await transaction
           .request()
           .input("invoiceId", sql.UniqueIdentifier, invoiceId)
+          .input("itemRefID", sql.UniqueIdentifier, item.itemRefID || null)
           .input("hsCode", sql.NVarChar, item.hsCode)
           .input("productDescription", sql.NVarChar, item.productDescription)
           .input("rate", sql.NVarChar, item.rate)
@@ -510,13 +515,13 @@ app.post("/api/invoices", authenticateToken, async (req, res) => {
           .input("sroItemSerialNo", sql.NVarChar, item.sroItemSerialNo || "")
           .query(`
             INSERT INTO InvoiceItems (
-              InvoiceID, HSCode, ProductDescription, Rate, UoM, Quantity,
+              InvoiceID, ItemRefID, HSCode, ProductDescription, Rate, UoM, Quantity,
               TotalValues, ValueSalesExcludingST, FixedNotifiedValueOrRetailPrice,
               SalesTaxApplicable, SalesTaxWithheldAtSource, ExtraTax, FurtherTax,
               SROScheduleNo, FEDPayable, Discount, SaleType, SROItemSerialNo
             )
             VALUES (
-              @invoiceId, @hsCode, @productDescription, @rate, @uoM, @quantity,
+              @invoiceId, @itemRefID, @hsCode, @productDescription, @rate, @uoM, @quantity,
               @totalValues, @valueSalesExcludingST, @fixedNotifiedValueOrRetailPrice,
               @salesTaxApplicable, @salesTaxWithheldAtSource, @extraTax, @furtherTax,
               @sroScheduleNo, @fedPayable, @discount, @saleType, @sroItemSerialNo
@@ -2694,19 +2699,24 @@ app.get("/api/items", authenticateToken, async (req, res) => {
         .request()
         .input("companyId", sql.UniqueIdentifier, companyId).query(`
           SELECT 
-            ItemID as itemId,
-            HSCode as hsCode,
-            Description as description,
-            UnitPrice as unitPrice,
-            PurchaseTaxValue as purchaseTaxValue,
-            SalesTaxValue as salesTaxValue,
-            UoM as uom,
-            IsActive as isActive,
-            ItemCreateDate as itemCreateDate,
-            CompanyID as companyId
-          FROM Items 
-          WHERE CompanyID = @companyId
-          ORDER BY ItemCreateDate DESC
+            i.ItemID as itemId,
+            i.HSCode as hsCode,
+            i.Description as description,
+            i.UnitPrice as unitPrice,
+            i.PurchaseTaxValue as purchaseTaxValue,
+            i.SalesTaxValue as salesTaxValue,
+            i.UoM as uom,
+            i.IsActive as isActive,
+            i.ItemCreateDate as itemCreateDate,
+            i.CompanyID as companyId,
+            i.InitialStock as initialStock,
+            (ISNULL(i.InitialStock, 0) + 
+             ISNULL((SELECT SUM(CAST(PurchaseQty AS DECIMAL(18,2))) FROM PurchaseItems WHERE ItemRefID = i.ItemID), 0) - 
+             ISNULL((SELECT SUM(Quantity) FROM InvoiceItems WHERE ItemRefID = i.ItemID), 0)
+            ) as currentStock
+          FROM Items i
+          WHERE i.CompanyID = @companyId
+          ORDER BY i.ItemCreateDate DESC
         `);
 
       res.json({
@@ -2767,6 +2777,7 @@ app.post("/api/items", authenticateToken, async (req, res) => {
       purchaseTaxValue,
       salesTaxValue,
       uom,
+      initialStock,
     } = req.body;
 
     // For super admin, use company ID from header if provided, otherwise use user's company
@@ -2792,12 +2803,14 @@ app.post("/api/items", authenticateToken, async (req, res) => {
         .input("purchaseTaxValue", sql.Decimal(5, 2), purchaseTaxValue || 0)
         .input("salesTaxValue", sql.Decimal(5, 2), salesTaxValue || 0)
         .input("uom", sql.VarChar(20), uom)
+        .input("initialStock", sql.Decimal(18, 2), initialStock || 0)
         .input("companyId", sql.UniqueIdentifier, companyId)
         .input("createdBy", sql.UniqueIdentifier, req.user.userId).query(`
-          INSERT INTO Items (HSCode, Description, UnitPrice, PurchaseTaxValue, SalesTaxValue, UoM, CompanyID, CreatedBy, ItemCreateDate, IsActive)
-          OUTPUT INSERTED.ItemID, INSERTED.HSCode, INSERTED.Description, INSERTED.UnitPrice, 
-                 INSERTED.PurchaseTaxValue, INSERTED.SalesTaxValue, INSERTED.UoM, INSERTED.IsActive, INSERTED.ItemCreateDate
-          VALUES (@hsCode, @description, @unitPrice, @purchaseTaxValue, @salesTaxValue, @uom, @companyId, @createdBy, GETDATE(), 1)
+          INSERT INTO Items (HSCode, Description, UnitPrice, PurchaseTaxValue, SalesTaxValue, UoM, InitialStock, CompanyID, CreatedBy, ItemCreateDate, IsActive)
+          OUTPUT INSERTED.ItemID as itemId, INSERTED.HSCode as hsCode, INSERTED.Description as description, INSERTED.UnitPrice as unitPrice, 
+                 INSERTED.PurchaseTaxValue as purchaseTaxValue, INSERTED.SalesTaxValue as salesTaxValue, INSERTED.UoM as uom, 
+                 INSERTED.InitialStock as initialStock, INSERTED.IsActive as isActive, INSERTED.ItemCreateDate as itemCreateDate
+          VALUES (@hsCode, @description, @unitPrice, @purchaseTaxValue, @salesTaxValue, @uom, @initialStock, @companyId, @createdBy, GETDATE(), 1)
         `);
 
       res.status(201).json({
@@ -2847,6 +2860,7 @@ app.put("/api/items/:id", authenticateToken, async (req, res) => {
       purchaseTaxValue,
       salesTaxValue,
       uom,
+      initialStock,
     } = req.body;
 
     // For super admin, use company ID from header if provided, otherwise use user's company
@@ -2873,6 +2887,7 @@ app.put("/api/items/:id", authenticateToken, async (req, res) => {
         .input("purchaseTaxValue", sql.Decimal(5, 2), purchaseTaxValue || 0)
         .input("salesTaxValue", sql.Decimal(5, 2), salesTaxValue || 0)
         .input("uom", sql.VarChar(20), uom)
+        .input("initialStock", sql.Decimal(18, 2), initialStock || 0)
         .input("companyId", sql.UniqueIdentifier, companyId).query(`
           UPDATE Items 
           SET HSCode = @hsCode,
@@ -2880,9 +2895,11 @@ app.put("/api/items/:id", authenticateToken, async (req, res) => {
               UnitPrice = @unitPrice,
               PurchaseTaxValue = @purchaseTaxValue,
               SalesTaxValue = @salesTaxValue,
-              UoM = @uom
-          OUTPUT INSERTED.ItemID, INSERTED.HSCode, INSERTED.Description, INSERTED.UnitPrice,
-                 INSERTED.PurchaseTaxValue, INSERTED.SalesTaxValue, INSERTED.UoM, INSERTED.IsActive, INSERTED.ItemCreateDate
+              UoM = @uom,
+              InitialStock = @initialStock
+          OUTPUT INSERTED.ItemID as itemId, INSERTED.HSCode as hsCode, INSERTED.Description as description, INSERTED.UnitPrice as unitPrice,
+                 INSERTED.PurchaseTaxValue as purchaseTaxValue, INSERTED.SalesTaxValue as salesTaxValue, INSERTED.UoM as uom, 
+                 INSERTED.InitialStock as initialStock, INSERTED.IsActive as isActive, INSERTED.ItemCreateDate as itemCreateDate
           WHERE ItemID = @itemId AND CompanyID = @companyId
         `);
 
@@ -3017,7 +3034,7 @@ app.get("/api/purchases", authenticateToken, async (req, res) => {
         FROM Purchases p
         OUTER APPLY (
           SELECT 
-            ItemID as itemId,
+            ItemRefID as itemId,
             ItemName as itemName,
             PurchasePrice as purchasePrice,
             PurchaseQty as purchaseQty,
@@ -3109,16 +3126,16 @@ app.post("/api/purchases", authenticateToken, async (req, res) => {
       await transaction
         .request()
         .input("purchaseId", sql.UniqueIdentifier, purchaseId)
-        .input("itemId", sql.UniqueIdentifier, item.itemId)
+        .input("itemRefID", sql.UniqueIdentifier, item.itemId || null) // Using ItemRefID instead of ItemID
         .input("itemName", sql.NVarChar, item.itemName)
         .input("purchasePrice", sql.Decimal(18, 2), item.purchasePrice)
-        .input("purchaseQty", sql.Int, item.purchaseQty)
+        .input("purchaseQty", sql.Decimal(18, 2), item.purchaseQty)
         .input("totalAmount", sql.Decimal(18, 2), item.totalAmount).query(`
           INSERT INTO PurchaseItems (
-            PurchaseID, ItemID, ItemName, PurchasePrice, PurchaseQty, TotalAmount
+            PurchaseID, ItemRefID, ItemName, PurchasePrice, PurchaseQty, TotalAmount
           )
           VALUES (
-            @purchaseId, @itemId, @itemName, @purchasePrice, @purchaseQty, @totalAmount
+            @purchaseId, @itemRefID, @itemName, @purchasePrice, @purchaseQty, @totalAmount
           )
         `);
     }
@@ -3314,7 +3331,7 @@ app.get("/api/purchases/:id", authenticateToken, async (req, res) => {
         FROM Purchases p
         OUTER APPLY (
           SELECT 
-            ItemID as itemId,
+            ItemRefID as itemId,
             ItemName as itemName,
             PurchasePrice as purchasePrice,
             PurchaseQty as purchaseQty,

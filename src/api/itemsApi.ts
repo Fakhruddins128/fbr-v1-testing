@@ -14,6 +14,8 @@ export interface Item {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  initialStock: number;
+  currentStock: number;
 }
 
 export interface CreateItemRequest {
@@ -23,6 +25,7 @@ export interface CreateItemRequest {
   purchaseTaxValue: number;
   salesTaxValue: number;
   uom: string;
+  initialStock: number;
 }
 
 export interface UpdateItemRequest extends CreateItemRequest {

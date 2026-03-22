@@ -47,6 +47,7 @@ interface ItemFormData {
   purchaseTaxValue: number;
   salesTaxValue: number;
   uom: string;
+  initialStock: number;
 }
 
 const Items: React.FC = () => {
@@ -61,6 +62,7 @@ const Items: React.FC = () => {
     purchaseTaxValue: 0,
     salesTaxValue: 0,
     uom: 'Numbers, pieces, units',
+    initialStock: 0,
   });
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -105,6 +107,7 @@ const Items: React.FC = () => {
         purchaseTaxValue: item.purchaseTaxValue,
         salesTaxValue: item.salesTaxValue,
         uom: item.uom || 'Numbers, pieces, units',
+        initialStock: item.initialStock || 0,
       });
     } else {
       setSelectedItem(null);
@@ -115,6 +118,7 @@ const Items: React.FC = () => {
         purchaseTaxValue: 0,
         salesTaxValue: 0,
         uom: 'Numbers, pieces, units',
+        initialStock: 0,
       });
     }
     setOpenDialog(true);
@@ -130,11 +134,12 @@ const Items: React.FC = () => {
       purchaseTaxValue: 0,
       salesTaxValue: 0,
       uom: 'Numbers, pieces, units',
+      initialStock: 0,
     });
   };
 
   const handleSubmit = async () => {
-    if (!formData.hsCode || !formData.description || formData.unitPrice <= 0) {
+    if (!formData.hsCode || !formData.description || formData.unitPrice < 0) {
       showSnackbar('Please fill in all required fields', 'error');
       return;
     }
@@ -148,6 +153,7 @@ const Items: React.FC = () => {
         purchaseTaxValue: formData.purchaseTaxValue,
         salesTaxValue: formData.salesTaxValue,
         uom: formData.uom || 'Numbers, pieces, units',
+        initialStock: formData.initialStock || 0,
       };
 
       let response;
@@ -457,11 +463,12 @@ const Items: React.FC = () => {
                 <TableCell sx={{ fontWeight: 'bold' }}>HS Code</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Description</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Unit Price</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Initial Stock</TableCell>
+                <TableCell sx={{ fontWeight: 'bold' }}>Current Stock</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Purchase Tax</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Sales Tax</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>UoM</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>Status</TableCell>
-                <TableCell sx={{ fontWeight: 'bold' }}>Created Date</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -477,6 +484,15 @@ const Items: React.FC = () => {
                     </Tooltip>
                   </TableCell>
                   <TableCell>{formatCurrency(item.unitPrice)}</TableCell>
+                  <TableCell>{item.initialStock || 0}</TableCell>
+                  <TableCell>
+                    <Chip 
+                      label={item.currentStock || 0}
+                      color={(item.currentStock || 0) <= 0 ? 'error' : (item.currentStock || 0) < 10 ? 'warning' : 'info'}
+                      size="small"
+                      variant="outlined"
+                    />
+                  </TableCell>
                   <TableCell>{item.purchaseTaxValue.toFixed(2)}%</TableCell>
                   <TableCell>{item.salesTaxValue.toFixed(2)}%</TableCell>
                   <TableCell>{item.uom || 'N/A'}</TableCell>
@@ -486,9 +502,6 @@ const Items: React.FC = () => {
                       color={item.isActive ? 'success' : 'default'}
                       size="small"
                     />
-                  </TableCell>
-                  <TableCell>
-                    {item.itemCreateDate ? formatDate(item.itemCreateDate) : 'N/A'}
                   </TableCell>
                   <TableCell align="center">
                     <Tooltip title="Edit Item">
@@ -592,6 +605,16 @@ const Items: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, uom: e.target.value })}
                 required
                 placeholder="e.g., PCS, KG, LTR, MTR"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                fullWidth
+                label="Initial Stock"
+                type="number"
+                value={formData.initialStock}
+                onChange={(e) => setFormData({ ...formData, initialStock: parseFloat(e.target.value) || 0 })}
+                inputProps={{ min: 0, step: 1 }}
               />
             </Grid>
           </Grid>
