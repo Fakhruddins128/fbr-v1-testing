@@ -306,10 +306,6 @@ const Items: React.FC = () => {
     document.body.removeChild(link);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
-
 
   // Calculate summary statistics
   const totalItems = items.length;
